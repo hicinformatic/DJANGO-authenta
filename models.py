@@ -13,9 +13,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(_('Active'), default=True)
     first_name = models.CharField(_('First name'), max_length=30, blank=True)
     last_name = models.CharField(_('Last name'), max_length=30, blank=True)
-    date_joined = models.DateTimeField(_('Date joined'), auto_now_add=True)
-    last_login = models.DateTimeField(_('Last login'),)
+    date_joined = models.DateTimeField(_('Date joined'), auto_now_add=True, editable=False)
     dateupdate = models.DateTimeField(_('Last modification date'), auto_now=True, editable=False)
+    authentication_method = models.PositiveSmallIntegerField(_('Authentication method'), choices=_authenta.methods, default=1)
 
     objects = UserManager()
     USERNAME_FIELD = _authenta.uniqidentity

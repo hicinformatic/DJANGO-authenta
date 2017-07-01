@@ -1,5 +1,5 @@
 from django.conf import settings
-import syslog, os
+import datetime, syslog, os
 
 class _authenta:
     appdir = os.path.dirname(os.path.realpath(__file__))
@@ -11,7 +11,8 @@ class _authenta:
     backend = '&'
     backext = '.sh'
     syslog = False
-    sysloglvl = 5
+    locallog = True
+    loglvl = 7
     killscript = 3600
     host = 'localhost'
     ip = '127.0.0.1'
@@ -25,6 +26,11 @@ class _authenta:
     emailnull = False
     uniqidentity = 'email'
     requiredfields = []
+    methods = (
+        (0, 'Create Super User'),
+        (1, 'Back end'),
+        (2, 'Proprietary'),
+    )
 
 if hasattr(settings, 'AUTHENTA_SETTINGS'):
     for k,v in settings.AUTHENTA_SETTINGS.items():
@@ -35,7 +41,14 @@ if not os.path.exists(_authenta.logsdir):
     os.makedirs(_authenta.logsdir)
 
 def logmethis(lvl, msg):
-    if conf['syslog'] is True and conf['sysloglvl'] >= lvl:
-        syslog.openlog(logoption=syslog.LOG_PID)
-        syslog.syslog(lvl, msg)
-        syslog.closelog()
+    if _authenta.loglvl >= lvl:
+        if _authenta.syslog is True:
+            syslog.openlog(logoption=syslog.LOG_PID)
+            syslog.syslog(lvl, msg)
+            syslog.closelog()
+        if _authenta.locallog is True:
+            now = datetime.datetime.now()
+            logfile = '{}/{}_{}_{}_authenta.log'.format(_authenta.logsdir, now.year, now.month, now.day)
+            log = open(logfile, 'a')
+            log.write('{}:{}:{}.{} - {} | {}'.format(now.hour, now.minute, now.second, now.microsecond, lvl, msg))
+            log.close()

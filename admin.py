@@ -1,23 +1,17 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from .models import User
+
+from django.contrib.auth.admin import UserAdmin, GroupAdmin
+from django.contrib.auth.models import Group
+
+from .models import User as CustomUser
 from .settings import _authenta
-# Register your models here.
 
-@admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    fieldsets = (
-       (None, {'fields': ('username', 'email', 'password')}),
-        ('Personal info', {'fields': ('first_name','last_name')}),
-        ('Permissions', {'fields': ('groups',)}),
-    )
-    readonly_fields = ( 'date_joined', )
+@admin.register(CustomUser)
+class CustomUserAdmin(UserAdmin):
+    list_display = (_authenta.uniqidentity, 'is_active', 'is_staff', 'date_joined')
+    readonly_fields = ('date_joined', )
+    add_fieldsets = (( None, { 'fields': (_authenta.uniqidentity, 'password1', 'password2') }),)
 
-
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from .models import User
-from .settings import _authenta
-# Register your models here.
-
-admin.site.register(User, UserAdmin)
+#admin.site.unregister(Group)
+#Group._meta.app_label = 'authenta'
+#admin.site.register(Group, GroupAdmin)
