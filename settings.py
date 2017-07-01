@@ -5,7 +5,7 @@ class _authenta:
     appdir = os.path.dirname(os.path.realpath(__file__))
     taskdir = os.path.dirname(os.path.realpath(__file__))+'/tasks'
     logsdir = os.path.dirname(os.path.realpath(__file__))+'/logs'
-    python = '/bin/python3.5'
+    python = '/bin/python3.6'
     binary = '/bin/bash'
     backstart =  '/bin/nohup'
     backend = '&'
@@ -14,13 +14,17 @@ class _authenta:
     sysloglvl = 5
     killscript = 3600
     host = 'localhost'
-    ip = '127.0.0.1
+    ip = '127.0.0.1'
     charset = 'utf-8'
-    usernamefield = 'username'
-    requiredfieds = ['username']
-    emailuniq = False
+    adminheader = 'Authentication and Authorization'
+    usernameuniq = False
+    usernameblank = True
+    usernamenull = True
+    emailuniq = True
     emailblank = False
-    emailnull = True
+    emailnull = False
+    uniqidentity = 'email'
+    requiredfields = []
 
 if hasattr(settings, 'AUTHENTA_SETTINGS'):
     for k,v in settings.AUTHENTA_SETTINGS.items():
@@ -28,7 +32,7 @@ if hasattr(settings, 'AUTHENTA_SETTINGS'):
             setattr(_authenta, k, v)
 
 if not os.path.exists(_authenta.logsdir):
-    os.makedirs(_authenta.directory)
+    os.makedirs(_authenta.logsdir)
 
 def logmethis(lvl, msg):
     if conf['syslog'] is True and conf['sysloglvl'] >= lvl:
