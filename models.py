@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.auth.models import Group
 
 from .manager import UserManager
 from .settings import _authenta
@@ -14,8 +15,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(_('First name'), max_length=30, blank=True)
     last_name = models.CharField(_('Last name'), max_length=30, blank=True)
     date_joined = models.DateTimeField(_('Date joined'), auto_now_add=True, editable=False)
-    dateupdate = models.DateTimeField(_('Last modification date'), auto_now=True, editable=False)
-    authentication_method = models.PositiveSmallIntegerField(_('Authentication method'), choices=_authenta.methods, default=1)
+    date_update = models.DateTimeField(_('Last modification date'), auto_now=True, editable=False)
+    authentication_method = models.PositiveSmallIntegerField(_('Authentication method'), choices=_authenta.methods, default=2)
 
     objects = UserManager()
     USERNAME_FIELD = _authenta.uniqidentity
@@ -31,3 +32,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.first_name
+
+
+class Group(Group):
+
+    class Meta:
+        verbose_name = _('group')
+        verbose_name_plural = _('groups')

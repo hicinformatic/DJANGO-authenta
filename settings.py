@@ -28,8 +28,8 @@ class _authenta:
     requiredfields = []
     methods = (
         (0, 'Create Super User'),
-        (1, 'Back end'),
-        (2, 'Proprietary'),
+        (1, 'Back-end'),
+        (2, 'Front-end'),
     )
 
 if hasattr(settings, 'AUTHENTA_SETTINGS'):
