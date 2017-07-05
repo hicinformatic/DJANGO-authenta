@@ -16,6 +16,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(_('Last name'), max_length=30, blank=True)
     date_joined = models.DateTimeField(_('Date joined'), auto_now_add=True, editable=False)
     date_update = models.DateTimeField(_('Last modification date'), auto_now=True, editable=False)
+    update_by = models.CharField(_('Update by'), max_length=254, null=True, editable=False)
     authentication_method = models.PositiveSmallIntegerField(_('Authentication method'), choices=_authenta.methods, default=2)
 
     objects = UserManager()
