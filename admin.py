@@ -22,9 +22,10 @@ class CustomUserAdmin(UserAdmin):
     list_display = (_authenta.uniqidentity, 'is_active', 'is_staff', 'date_joined')
     readonly_fields = ('date_joined', 'date_update', 'update_by')
     add_fieldsets = (( None, { 'fields': (_authenta.uniqidentity, 'password1', 'password2') }),)
+    fieldsets = [_authenta.adminnone, _authenta.adminpersonnal]
     fieldsets = (
-       (None, {'fields': ('username', 'password')}),
-       (_('Personal info'), {'fields': ('first_name', 'last_name', 'email')}),
+       (_authenta.adminnone),
+       (_authenta.adminpersonnal),
        (_('Authentication method'), {'fields': ('authentication_method',)}),
        (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
@@ -32,7 +33,7 @@ class CustomUserAdmin(UserAdmin):
     )
 
     def save_model(self, request, obj, form, change):
-        obj.authentication_method = 1
+        if obj.authentication_method is None: obj.authentication_method = 1
         obj.update_by = getattr(request.user, _authenta.uniqidentity)
         super(CustomUserAdmin, self).save_model(request, obj, form, change)
 

@@ -3,20 +3,21 @@ from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import Group
+from django.urls import reverse
 
 from .manager import UserManager
 from .settings import _authenta
 
 class User(AbstractBaseUser, PermissionsMixin):
-    username = models.CharField(_('Username'), max_length=254, unique=_authenta.usernameuniq, blank=_authenta.usernameblank, null=_authenta.usernamenull)
-    email = models.EmailField(_('Email address'), unique=_authenta.emailuniq, blank=_authenta.emailblank, null=_authenta.emailnull)
-    is_active = models.BooleanField(_('Active'), default=True)
-    is_staff = models.BooleanField(_('Active'), default=True)
-    first_name = models.CharField(_('First name'), max_length=30, blank=True)
-    last_name = models.CharField(_('Last name'), max_length=30, blank=True)
+    username = models.CharField(_('Username'), blank=_authenta.usernamenull, max_length=254, null=_authenta.usernamenull, unique=_authenta.usernameuniq)
+    email = models.EmailField(_('Email address'), blank=_authenta.emailnull, null=_authenta.emailnull, unique=_authenta.emailuniq)
+    is_active = models.BooleanField(_('Active'), default=_authenta.isactivedefault)
+    is_staff = models.BooleanField(_('Staff'), default=_authenta.isstaffdefault)
+    first_name = models.CharField(_('First name'), blank=_authenta.firstnamenull, max_length=30, null=_authenta.firstnamenull)
+    last_name = models.CharField(_('Last name'), blank=_authenta.lastnamenull, max_length=30, null=_authenta.lastnamenull)
     date_joined = models.DateTimeField(_('Date joined'), auto_now_add=True, editable=False)
     date_update = models.DateTimeField(_('Last modification date'), auto_now=True, editable=False)
-    update_by = models.CharField(_('Update by'), max_length=254, null=True, editable=False)
+    update_by = models.CharField(_('Update by'), editable=False, max_length=254)
     authentication_method = models.PositiveSmallIntegerField(_('Authentication method'), choices=_authenta.methods, default=2)
 
     objects = UserManager()
@@ -34,9 +35,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     def get_short_name(self):
         return self.first_name
 
+    def get_absolute_url(self):
+        return reverse('authenta:ProfileEXT', args=[str(self.id), 'html'])
+
 
 class Group(Group):
-
     class Meta:
         verbose_name = _('group')
         verbose_name_plural = _('groups')

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
 import datetime, syslog, os
 
 class _authenta:
@@ -16,15 +17,20 @@ class _authenta:
     killscript = 3600
     host = 'localhost'
     ip = '127.0.0.1'
+    contenttype_txt = 'text/plain'
     charset = 'utf-8'
     adminheader = 'Authentication and Authorization'
     usernameuniq = False
-    usernameblank = True
     usernamenull = True
     emailuniq = True
-    emailblank = False
     emailnull = False
+    firstnamenull = True
+    lastnamenull = True
+    isactivedefault = False
+    isstaffdefault = False
     uniqidentity = 'email'
+    adminnone = (None, {'fields': ('email', 'password')})
+    adminpersonnal = (_('Personal info'), {'fields': ('username', 'first_name', 'last_name')})
     requiredfields = []
     methods = (
         (0, 'Create Super User'),
