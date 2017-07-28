@@ -1,0 +1,1 @@
+{% if errors %}{% for key,value in errors.items %}{{ key }} | {% for error in value %}{{ error }};{% endfor %}\r\n{% endfor %}{% endif %}

@@ -20,7 +20,7 @@ class _authenta:
     contenttype_txt = 'text/plain'
     charset = 'utf-8'
     adminheader = 'Authentication and Authorization'
-    usernameuniq = False
+    usernameuniq = True
     usernamenull = True
     emailuniq = True
     emailnull = False

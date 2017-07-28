@@ -14,7 +14,7 @@ import unicodedata
 class UsernameField(forms.CharField):
     def to_python(self, value):
         username = super(UsernameField, self).to_python(value)
-        return '' if _authenta.uniqidentity != 'username' and username is None else unicodedata.normalize('NFKC', username) 
+        return username if _authenta.uniqidentity != 'username' and username is None and _authenta.usernamenull is True else unicodedata.normalize('NFKC', username) 
 UserChangeForm._meta.field_classes['username'] = UsernameField
 
 @admin.register(CustomUser)

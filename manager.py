@@ -13,7 +13,7 @@ class UserManager(BaseUserManager):
         del extra_fields[_authenta.uniqidentity]
         for field,value in extra_fields.items():
             if field == 'email':
-                user.email = self.normalize_email(email)
+                user.email = self.normalize_email(value)
             else:
                 setattr(user, field, value)
         user.set_password(password)
