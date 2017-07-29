@@ -6,16 +6,14 @@ class UserManager(BaseUserManager):
 
     def _create_user(self, password, **extra_fields):
         for field in _authenta.requiredfields:
-            if field not in extra_fields:
-                raise ValueError('The given'+ field +'must be set')
+            if field not in extra_fields: raise ValueError('The given'+ field +'must be set')
         user = self.model()
-        setattr(user, _authenta.uniqidentity, extra_fields[_authenta.uniqidentity])
-        del extra_fields[_authenta.uniqidentity]
+        #setattr(user, _authenta.uniqidentity, extra_fields[_authenta.uniqidentity])
+        #del extra_fields[_authenta.uniqidentity]
         for field,value in extra_fields.items():
-            if field == 'email':
-                user.email = self.normalize_email(value)
-            else:
-                setattr(user, field, value)
+            if field == 'email': user.email = self.normalize_email(value)
+            elif field == 'username': user.username = self.model.normalize_username(value)
+            else: setattr(user, field, value)
         user.set_password(password)
         user.save(using=self._db)
         return user

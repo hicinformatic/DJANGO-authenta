@@ -21,7 +21,7 @@ UserChangeForm._meta.field_classes['username'] = UsernameField
 class CustomUserAdmin(UserAdmin):
     list_display = (_authenta.uniqidentity, 'is_active', 'is_staff', 'date_joined')
     readonly_fields = ('date_joined', 'date_update', 'update_by')
-    add_fieldsets = (( None, { 'fields': (_authenta.uniqidentity, 'password1', 'password2') }),)
+    add_fieldsets = (( None, { 'fields': (_authenta.uniqidentity, _authenta.requiredfields, 'password1', 'password2') }),)
     fieldsets = [_authenta.adminnone, _authenta.adminpersonnal]
     fieldsets = (
        (_authenta.adminnone),

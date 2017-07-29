@@ -21,7 +21,7 @@ class _authenta:
     charset = 'utf-8'
     adminheader = 'Authentication and Authorization'
     usernameuniq = True
-    usernamenull = True
+    usernamenull = False
     emailuniq = True
     emailnull = False
     firstnamenull = True
@@ -31,7 +31,7 @@ class _authenta:
     uniqidentity = 'email'
     adminnone = (None, {'fields': ('email', 'password')})
     adminpersonnal = (_('Personal info'), {'fields': ('username', 'first_name', 'last_name')})
-    requiredfields = []
+    requiredfields = ['username']
     methods = (
         (0, 'Create Super User'),
         (1, 'Back-end'),

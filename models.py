@@ -7,14 +7,16 @@ from django.contrib.auth.validators import ASCIIUsernameValidator, UnicodeUserna
 from django.urls import reverse
 from django.utils import six
 
+import unicodedata
+
 from .manager import UserManager
 from .settings import _authenta
 
+
+
 #class User(AbstractBaseUser, PermissionsMixin):
 class User(AbstractUser):
-    username_validator = UnicodeUsernameValidator() if six.PY3 else ASCIIUsernameValidator()
-
-    username = models.CharField(_('Username'), blank=_authenta.usernamenull, max_length=254, null=_authenta.usernamenull, unique=_authenta.usernameuniq, validators=[username_validator],)
+    username = models.CharField(_('Username'), blank=_authenta.usernamenull, max_length=254, null=_authenta.usernamenull, unique=_authenta.usernameuniq, validators=[AbstractUser.username_validator],)
     email = models.EmailField(_('Email address'), blank=_authenta.emailnull, null=_authenta.emailnull, unique=_authenta.emailuniq)
     is_active = models.BooleanField(_('Active'), default=_authenta.isactivedefault)
     is_staff = models.BooleanField(_('Staff'), default=_authenta.isstaffdefault)
@@ -35,7 +37,8 @@ class User(AbstractUser):
 
     def clean(self):
         super(AbstractUser, self).clean()
-        self.username = unicodedata.normalize('NFKC', self.username) 
+        if 'username' in _authenta.requiredfields or self.username is not None:
+            self.username = unicodedata.normalize('NFKC', self.username) 
         self.email = self.__class__.objects.normalize_email(self.email)
 
     def get_absolute_url(self):
