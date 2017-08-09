@@ -15,6 +15,7 @@ from django.template import Context
 
 import unicodedata
 
+from . import check
 from .manager import UserManager
 from .apps import AuthentaConfig
 

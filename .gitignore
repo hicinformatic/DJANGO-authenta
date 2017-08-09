@@ -1,0 +1,4 @@
+__pycache__/
+migations/
+logs/
+ldapcerts/
