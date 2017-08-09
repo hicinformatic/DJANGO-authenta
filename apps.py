@@ -46,13 +46,15 @@ class AuthentaConfig(AppConfig):
     isstaffdefault = False
     adminnone = (None, {'fields': ('username', 'password')})
     adminpersonnal = (_('Personal info'), {'fields': ('email', 'first_name', 'last_name')})
-    choices_method = (('CREATESUPERUSER', _('Create Super User')),('BACKEND', _('Back-end')),('FRONTEND', _('Front-end')))
+    choices_method = (('CREATESUPERUSER', _('Create Super User')),('BACKEND', _('Back-end')),('FRONTEND', _('Front-end')), ('ADDITIONAL', _('Additional method')))
     additional_methods = []
-
+s
     ldap_activated = True
-    choices_ldapscope = (('SCOPE_BASE', 'SCOPE_BASE'), ('SCOPE_ONELEVEL', 'SCOPE_ONELEVEL'), ('SCOPE_SUBTREE', 'SCOPE_SUBTREE'))
-    choices_ldapversion = (('VERSION2', 'VERSION2'), ('VERSION3', 'VERSION3'))
+    choices_ldapscope = (('SCOPE_BASE', 'base (scope=base)'), ('SCOPE_ONELEVEL', 'onelevel (scope=onelevel)'), ('SCOPE_SUBTREE', 'subtree (scope=subtree)'))
+    choices_ldapversion = (('VERSION2', 'Version 2 (LDAPv2)'), ('VERSION3', 'Version 3 (LDAPv3)'))
     dir_ldapcerts = os.path.dirname(os.path.realpath(__file__))+'/ldapcerts'
+
+    facebook_activated = False
 
     def ready(self):
         from . import signals
@@ -63,6 +65,9 @@ if hasattr(settings, 'AUTHENTA_SETTINGS'):
 
 if AuthentaConfig.ldap_activated:
     AuthentaConfig.additional_methods += (('LDAP', 'ldap'),)
+
+if AuthentaConfig.facebook_activated:
+    AuthentaConfig.additional_methods += (('FACEBOOK', 'Facebook'),)
 
 def logmethis(lvl, msg):
     if AuthentaConfig.loglvl >= lvl:

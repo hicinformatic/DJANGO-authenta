@@ -1,11 +1,11 @@
 from django.contrib.auth.base_user import BaseUserManager
-from .settings import _authenta
+from .apps import AuthentaConfig
 
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
     def _create_user(self, password, **extra_fields):
-        for field in _authenta.requiredfields:
+        for field in AuthentaConfig.requiredfields:
             if field not in extra_fields: raise ValueError('The given'+ field +'must be set')
         user = self.model()
         #setattr(user, _authenta.uniqidentity, extra_fields[_authenta.uniqidentity])
@@ -20,6 +20,8 @@ class UserManager(BaseUserManager):
 
     def create_user(self, password=None, **extra_fields):
         extra_fields.setdefault('is_superuser', False)
+        extra_fields.setdefault('is_active', AuthentaConfig.isactivedefault)
+        extra_fields.setdefault('is_staff', AuthentaConfig.isstaffdefault)
         return self._create_user(password, **extra_fields)
 
     def create_superuser(self, password, **extra_fields):

@@ -21,13 +21,14 @@ UserChangeForm._meta.field_classes['username'] = UsernameField
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     list_display = (AuthentaConfig.uniqidentity, 'is_active', 'is_staff', 'date_joined')
+    filter_horizontal = ('groups', 'user_permissions', 'additional_method',)
     readonly_fields = ('date_joined', 'date_update', 'update_by')
     add_fieldsets = (( None, { 'fields': (AuthentaConfig.uniqidentity, AuthentaConfig.requiredfields, 'password1', 'password2') }),)
     fieldsets = [AuthentaConfig.adminnone, AuthentaConfig.adminpersonnal]
     fieldsets = (
        (AuthentaConfig.adminnone),
        (AuthentaConfig.adminpersonnal),
-       (_('Authentication method'), {'fields': ('authentication_method',)}),
+       (_('Authentication method'), {'fields': ('authentication_method', 'additional_method')}),
        (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
        (_('Log informations'), {'fields': ('date_update', 'update_by')}),
