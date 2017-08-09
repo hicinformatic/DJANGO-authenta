@@ -26,7 +26,7 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_active', True)
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('authentication_method', 0)
+        extra_fields.setdefault('authentication_method', 'CREATESUPERUSER')
         extra_fields.setdefault('update_by', 'manager.py')
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')

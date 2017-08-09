@@ -1,49 +1,75 @@
-from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
 from django.views.generic.edit import CreateView
+from django.views.generic.list import ListView
 from django.views.generic import DetailView
+from django.urls import reverse
 
-from .settings import _authenta
+from django.contrib.auth.views import LoginView, LogoutView
+
+from .apps import AuthentaConfig
+from .conversion import HybridResponseMixin
 from .forms import SignUpForm
 from .models import User
 
-class AjaxableResponseMixin:
-    def form_invalid(self, form):
-        response = super(AjaxableResponseMixin, self).form_invalid(form)
-        if self.request.is_ajax() or self.kwargs['extension'] == 'json':
-            return JsonResponse(form.errors, status=400)
-        elif self.kwargs['extension'] == 'txt':
-            data = '\n'.join(['{} | ("{}")'.format(input ,';'.join(errors)) for input,errors in form.errors.items()])
-            return HttpResponse(str(data), content_type='{}; charset={}'.format(_authenta.contenttype_txt, _authenta.charset))
-        else:
-            return response
+if AuthentaConfig.vsignup:
+    class SignUp(HybridResponseMixin, CreateView):
+        form_class = SignUpForm
+        template_name = 'authenta/form.html'
 
-    def form_valid(self, form):
-        response = super(AjaxableResponseMixin, self).form_valid(form)
-        if self.request.is_ajax() or self.kwargs['extension'] == 'json':
-            data = { 'pk': self.object.pk, }
-            return JsonResponse(data)
-        elif self.kwargs['extension'] == 'txt':
-            data = 'pk | ("{}")'.format(self.object.pk)
-            return HttpResponse(str(data), content_type='{}; charset={}'.format(_authenta.contenttype_txt, _authenta.charset))
-        else:
-            return resplonse
+        def get_context_data(self, **kwargs):
+            context = super(SignUp, self).get_context_data(**kwargs)
+            context['object'] = {field.html_name : field.help_text for field in context['form']}
+            return context
 
-    def render_to_response(self, context):
-        response = super(AjaxableResponseMixin, self).render_to_response(context)
-        if self.request.is_ajax() or self.kwargs['extension'] == 'json':
-            data = { 'pk': '1', }
-            return JsonResponse(data)
-        elif self.kwargs['extension'] == 'txt':
-            data = 'pk | ("1")'
-            return HttpResponse(str(data), content_type='{}; charset={}'.format(_authenta.contenttype_txt, _authenta.charset))
-        else:
-            return response
+if AuthentaConfig.vsignin:
+    class SignIn(HybridResponseMixin, LoginView):
+        template_name = 'authenta/form.html'
 
-class SignUp(AjaxableResponseMixin, CreateView):
-    form_class = SignUpForm
-    template_name = 'authenta/signup.html'
+        def get_context_data(self, **kwargs):
+            context = super(SignIn, self).get_context_data(**kwargs)
+            context['object'] = {field.html_name : field.help_text for field in context['form']}
+            return context
 
-class Profile(AjaxableResponseMixin, DetailView):
-    model = User
-    template_name = 'authenta/profile.html'
+        def get_success_url(self):
+            if self.request.user.is_authenticated:
+                return reverse('authenta:Profile', args=[str(self.request.user.id), '.html'])
+
+if AuthentaConfig.vprofile:
+    class ProfileList(HybridResponseMixin, ListView):
+        model = User
+        template_name = 'authenta/profilelist.html'
+        paginate_by = 26
+        slug = None
+
+        def get_context_data(self, **kwargs):
+            context = super(ProfileList, self).get_context_data(**kwargs)
+            context['object'] = {user.id : user.username for user in context['object_list']}
+            return context
+
+if AuthentaConfig.vprofile:
+    class Profile(HybridResponseMixin, DetailView):
+        model = User
+        template_name = 'authenta/profile.html'
+
+        def get_context_data(self, **kwargs):
+            context = super(Profile, self).get_context_data(**kwargs)
+            context['object'] = { "username" : self.object.username, }
+            return context
+
+if AuthentaConfig.vsignout:
+    class SignOut(HybridResponseMixin, LogoutView):
+        template_name = 'authenta/profile.html'
+
+        def get_context_data(self, **kwargs):
+            context = super(SignOut, self).get_context_data(**kwargs)
+            context['object'] = { "status" : "disconnected" }
+            return context
+
+def TestView(request):
+    from django.core.mail import send_mail
+    send_mail(
+        'Subject here',
+        'Here is the message.',
+        'from@example.com',
+        ['charlesdelencre@gmail.com'],
+        fail_silently=False,
+    )
