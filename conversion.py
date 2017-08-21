@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 
-from .settings import _authenta
+from .apps import AuthentaConfig
 
 class HybridResponseMixin:
     def form_invalid(self, form):
@@ -10,7 +10,7 @@ class HybridResponseMixin:
             return JsonResponse(form.errors, status=400)
         elif self.kwargs['extension'] == 'txt':
             data = '\n'.join(['{} | ("{}")'.format(input ,';'.join(errors)) for input,errors in form.errors.items()])
-            return HttpResponse(str(data), content_type='{}; charset={}'.format(_authenta.contenttype_txt, _authenta.charset))
+            return HttpResponse(str(data), content_type='{}; charset={}'.format(AuthentaConfig.contenttype_txt, AuthentaConfig.charset))
         else:
             return response
 
@@ -21,7 +21,7 @@ class HybridResponseMixin:
             return JsonResponse(data)
         elif self.kwargs['extension'] == 'txt':
             data = 'pk | ("{}")'.format(self.object.pk)
-            return HttpResponse(str(data), content_type='{}; charset={}'.format(_authenta.contenttype_txt, _authenta.charset))
+            return HttpResponse(str(data), content_type='{}; charset={}'.format(AuthentaConfig.contenttype_txt, AuthentaConfig.charset))
         else:
             return response
 
@@ -31,6 +31,6 @@ class HybridResponseMixin:
             return JsonResponse(context['object'])
         elif self.kwargs['extension'] == 'txt':
             data = '\n'.join(['{} | ("{}")'.format(key, value) for key,value in context['object'].items()])
-            return HttpResponse(str(data), content_type='{}; charset={}'.format(_authenta.contenttype_txt, _authenta.charset))
+            return HttpResponse(str(data), content_type='{}; charset={}'.format(AuthentaConfig.contenttype_txt, AuthentaConfig.charset))
         else:
             return response

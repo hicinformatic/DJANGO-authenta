@@ -31,6 +31,7 @@ class AuthentaConfig(AppConfig):
     vsignin = True
     vsignout = True
     vprofile = True
+    vprofilelist = True
 
     mail_activation = True
 
@@ -48,7 +49,7 @@ class AuthentaConfig(AppConfig):
     adminpersonnal = (_('Personal info'), {'fields': ('email', 'first_name', 'last_name')})
     choices_method = (('CREATESUPERUSER', _('Create Super User')),('BACKEND', _('Back-end')),('FRONTEND', _('Front-end')), ('ADDITIONAL', _('Additional method')))
     additional_methods = []
-s
+
     ldap_activated = True
     choices_ldapscope = (('SCOPE_BASE', 'base (scope=base)'), ('SCOPE_ONELEVEL', 'onelevel (scope=onelevel)'), ('SCOPE_SUBTREE', 'subtree (scope=subtree)'))
     choices_ldapversion = (('VERSION2', 'Version 2 (LDAPv2)'), ('VERSION3', 'Version 3 (LDAPv3)'))
@@ -65,7 +66,6 @@ if hasattr(settings, 'AUTHENTA_SETTINGS'):
 
 if AuthentaConfig.ldap_activated:
     AuthentaConfig.additional_methods += (('LDAP', 'ldap'),)
-
 if AuthentaConfig.facebook_activated:
     AuthentaConfig.additional_methods += (('FACEBOOK', 'Facebook'),)
 

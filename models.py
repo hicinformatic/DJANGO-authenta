@@ -96,7 +96,7 @@ class User(AbstractUser):
     date_update = models.DateTimeField(_('Last modification date'), auto_now=True, editable=False)
     update_by = models.CharField(_('Update by'), editable=False, max_length=254)
     authentication_method = models.CharField(_('Authentication method'), choices=AuthentaConfig.choices_method, default='FRONTEND', max_length=15)
-    additional_method = models.ManyToManyField(Method)
+    additional_method = models.ManyToManyField(Method, blank=True)
 
     objects = UserManager()
     USERNAME_FIELD = AuthentaConfig.uniqidentity

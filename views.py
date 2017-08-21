@@ -2,6 +2,8 @@ from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 from django.views.generic import DetailView
 from django.urls import reverse
+from django.shortcuts import redirect
+from django.http import Http404  
 
 from django.contrib.auth.views import LoginView, LogoutView
 
@@ -15,6 +17,12 @@ if AuthentaConfig.vsignup:
         form_class = SignUpForm
         template_name = 'authenta/form.html'
 
+        def dispatch(self, request, *args, **kwargs):
+            if request.user.is_authenticated():
+                if AuthentaConfig.vprofile: return redirect(reverse('authenta:Profile', args=[str(request.user.id), '.html']))
+                else: raise Http404
+            return super(SignUp, self).dispatch(request, *args, **kwargs)
+
         def get_context_data(self, **kwargs):
             context = super(SignUp, self).get_context_data(**kwargs)
             context['object'] = {field.html_name : field.help_text for field in context['form']}
@@ -23,6 +31,12 @@ if AuthentaConfig.vsignup:
 if AuthentaConfig.vsignin:
     class SignIn(HybridResponseMixin, LoginView):
         template_name = 'authenta/form.html'
+
+        def dispatch(self, request, *args, **kwargs):
+            if request.user.is_authenticated():
+                if AuthentaConfig.vprofile: return redirect(reverse('authenta:Profile', args=[str(request.user.id), '.html']))
+                else: raise Http404
+            return super(SignIn, self).dispatch(request, *args, **kwargs)
 
         def get_context_data(self, **kwargs):
             context = super(SignIn, self).get_context_data(**kwargs)
@@ -33,7 +47,7 @@ if AuthentaConfig.vsignin:
             if self.request.user.is_authenticated:
                 return reverse('authenta:Profile', args=[str(self.request.user.id), '.html'])
 
-if AuthentaConfig.vprofile:
+if AuthentaConfig.vprofilelist:
     class ProfileList(HybridResponseMixin, ListView):
         model = User
         template_name = 'authenta/profilelist.html'
