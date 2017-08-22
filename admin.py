@@ -5,12 +5,19 @@ from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.models import Group
 
+from django.utils.safestring import mark_safe
+from django.template.defaultfilters import escape
+from django.core.urlresolvers import reverse
+
 from .models import User as CustomUser
 from .models import Group as CustomGroup
 from .models import Method
 from .apps import AuthentaConfig
 
 import unicodedata
+
+#class AuthentaAdminSite(admin.AdminSite):
+#    pass
 
 class UsernameField(forms.CharField):
     def to_python(self, value):
@@ -45,21 +52,25 @@ class CustomGroup(GroupAdmin):
     pass
 
 class MethodAdminForm(forms.ModelForm):
-    ldap_password = forms.CharField(widget=forms.PasswordInput(render_value=True))
+    ldap_password = forms.CharField(label=_('Root password'), required=False, widget=forms.PasswordInput(render_value=True))
 
+def error_status(obj):
+    return True if obj.error is None else False
+error_status.short_description = _('In error')
+error_status.boolean = True
 @admin.register(Method)
 class MethodAdmin(admin.ModelAdmin):
     form = MethodAdminForm
     fieldsets = ((_('Globals'), { 'fields': ('method', 'name', 'status'), }),)
     filter_horizontal = ('groups', 'permissions')
-    list_display = ('name', 'method', 'status', 'is_staff', 'is_superuser')
+    list_display = ('name', 'method', 'status', error_status, 'is_staff', 'is_superuser')
     list_filter = ('method', 'status',)
     search_fields = ('name',)
     readonly_fields = ('update_by', 'date_create', 'date_update', 'error')
     if AuthentaConfig.ldap_activated:
         fieldsets += ((_('LDAP method'), {
             'classes': ('collapse',),
-            'fields': ('ldap_host', 'ldap_port', 'ldap_tls', 'ldap_cacert', 'ldap_define', 'ldap_scope', 'ldap_version', 'ldap_bind', 'ldap_password', 'ldap_user', 'ldap_search',),}),
+            'fields': ('ldap_host', 'ldap_port', 'ldap_tls', 'ldap_cert', 'ldap_define', 'ldap_scope', 'ldap_version', 'ldap_bind', 'ldap_password', 'ldap_user', 'ldap_search',),}),
         )
     fieldsets += ((_('Groups and permissions'), {
         'classes': ('wide',),
@@ -69,3 +80,17 @@ class MethodAdmin(admin.ModelAdmin):
         'classes': ('wide',),
         'fields': ('update_by', 'date_create', 'date_update', 'error'),}),
     )
+
+    actions = ['checkAuthentications']
+    def checkAuthentications(self, request, queryset):
+        for authent in queryset:
+            authent.get()
+            if authent.obj.check():
+                authent.success()
+            else:
+                link = u'<a href="%s">%s</a>' % (reverse('admin:authenta_method_change', args=(authent.id,)) , authent.name)
+                try: msg_warning = msg_warning+_('<br/>%s: <span style=\'color: red\'>%s</span>') % (link, authent.error)
+                except NameError: msg_warning = _('Verification failed for the following authentications:<br/>%s: <span style=\'color: red\'>%s</span>') % (link, authent.error)
+        try: self.message_user(request, mark_safe(msg_warning), 'warning')
+        except NameError: self.message_user(request, _('All authentications are ready'), 'success')
+    checkAuthentications.short_description = _('Check the authentications status')

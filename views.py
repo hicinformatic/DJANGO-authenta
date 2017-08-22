@@ -9,8 +9,20 @@ from django.contrib.auth.views import LoginView, LogoutView
 
 from .apps import AuthentaConfig
 from .conversion import HybridResponseMixin
-from .forms import SignUpForm
 from .models import User
+from .forms import SignUpForm, LDAPAuthenticationForm
+
+class AuthentaLoginView(HybridResponseMixin, LoginView):
+    template_name = 'authenta/login.html'
+    slug = None
+
+    def get_context_data(self, **kwargs):
+        context = super(AuthentaLoginView, self).get_context_data(**kwargs)
+        context['object'] = {field.html_name : field.help_text for field in context['form']}
+        if AuthentaConfig.ldap_activated:
+            context['ldapform'] = LDAPAuthenticationForm()
+        context['app_path'] = self.request.get_full_path()
+        return context
 
 if AuthentaConfig.vsignup:
     class SignUp(HybridResponseMixin, CreateView):

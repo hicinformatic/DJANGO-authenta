@@ -49,6 +49,7 @@ class AuthentaConfig(AppConfig):
     adminpersonnal = (_('Personal info'), {'fields': ('email', 'first_name', 'last_name')})
     choices_method = (('CREATESUPERUSER', _('Create Super User')),('BACKEND', _('Back-end')),('FRONTEND', _('Front-end')), ('ADDITIONAL', _('Additional method')))
     additional_methods = []
+    admin_override = False
 
     ldap_activated = True
     choices_ldapscope = (('SCOPE_BASE', 'base (scope=base)'), ('SCOPE_ONELEVEL', 'onelevel (scope=onelevel)'), ('SCOPE_SUBTREE', 'subtree (scope=subtree)'))
@@ -64,11 +65,6 @@ if hasattr(settings, 'AUTHENTA_SETTINGS'):
     for k,v in settings.AUTHENTA_SETTINGS.items():
         if hasattr(AuthentaConfig, k): setattr(AuthentaConfig, k, v)
 
-if AuthentaConfig.ldap_activated:
-    AuthentaConfig.additional_methods += (('LDAP', 'ldap'),)
-if AuthentaConfig.facebook_activated:
-    AuthentaConfig.additional_methods += (('FACEBOOK', 'Facebook'),)
-
 def logmethis(lvl, msg):
     if AuthentaConfig.loglvl >= lvl:
         if AuthentaConfig.syslog is True:
@@ -81,3 +77,15 @@ def logmethis(lvl, msg):
             log = open(logfile, 'a')
             log.write("{}:{}:{}.{} - {} | [authenta] {}\n".format(now.hour, now.minute, now.second, now.microsecond, lvl, msg))
             log.close()
+
+#if AuthentaConfig.admin_override:
+#    from .admin import AuthentaAdminSite
+#    admin_site = AuthentaAdminSite()
+#    admin_site.login_template = 'azerazerogin.html'
+#    admin.site = admin_site
+#    sites.site = admin_site
+
+if AuthentaConfig.ldap_activated:
+    AuthentaConfig.additional_methods += (('LDAP', 'LDAP'),)
+if AuthentaConfig.facebook_activated:
+    AuthentaConfig.additional_methods += (('FACEBOOK', 'Facebook'),)
