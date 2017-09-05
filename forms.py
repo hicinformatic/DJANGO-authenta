@@ -19,4 +19,19 @@ if AuthentaConfig.ldap_activated:
             max_length=254,
             widget=forms.TextInput(attrs={'autofocus': True}),
         )
+        error_messages = {
+            'invalid_login': _(
+                "Please enter a correct LDAP login and password. Note that both "
+                "fields may be case-sensitive."
+            ),
+            'inactive': _("This account is inactive."),
+        }
+
+        def clean(self):
+            raise forms.ValidationError(
+                self.error_messages['invalid_login'],
+                code='invalid_login',
+                params={'username': self.username_field.verbose_name},
+            )
+
 

@@ -14,4 +14,3 @@ if AuthentaConfig.vprofilelist:
     urlpatterns.append(url(r'^accounts/profile/?.?(?P<extension>(html|json|txt))?$', views.ProfileList.as_view(), name='ProfileList'))
 if AuthentaConfig.vprofile:
     urlpatterns.append(url(r'^accounts/profile/(?P<pk>\d+).?(?P<extension>(html|json|txt))?/?$', views.Profile.as_view(), name='Profile'))
-urlpatterns.append(url(r'^login.?(?P<extension>(html|json|txt))?/?$', views.AuthentaLoginView.as_view(), name='AuthentaLoginView'))

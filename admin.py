@@ -16,9 +16,6 @@ from .apps import AuthentaConfig
 
 import unicodedata
 
-#class AuthentaAdminSite(admin.AdminSite):
-#    pass
-
 class UsernameField(forms.CharField):
     def to_python(self, value):
         username = super(UsernameField, self).to_python(value)

@@ -6,7 +6,10 @@ import datetime, syslog, os
 
 class AuthentaConfig(AppConfig):
     name = 'authenta'
+    site_header = _('Django administration')
+    index_title = _('Site administration (assisted by Authenta)')
     verbose_name = _('Authentication and Authorization')
+
 
     dir_logs = os.path.dirname(os.path.realpath(__file__))+'/logs'
     dir_task = os.path.dirname(os.path.realpath(__file__))+'/tasks'
@@ -60,6 +63,57 @@ class AuthentaConfig(AppConfig):
 
     def ready(self):
         from . import signals
+
+        from django.views.decorators.cache import never_cache
+        from django.contrib.auth import REDIRECT_FIELD_NAME
+        from django.contrib import admin
+        from django.contrib.admin import sites
+        from django.urls import reverse
+        class AuthentaAdminSite(admin.AdminSite):
+            login_template = 'authenta/admin/login.html'
+            site_header = AuthentaConfig.site_header
+            index_title = AuthentaConfig.index_title
+
+            @never_cache
+            def login(self, request, extra_context=None):
+                from django.core.urlresolvers import resolve
+                current_url = resolve(request.path_info).url_name
+
+                if request.method == 'GET' and self.has_permission(request):
+                    index_path = reverse('admin:index', current_app=self.name)
+                    return HttpResponseRedirect(index_path)
+
+                context = dict(self.each_context(request), title=_('Log in'), app_path=request.get_full_path(), username=request.user.get_username(), current_url=current_url)
+                if (REDIRECT_FIELD_NAME not in request.GET and REDIRECT_FIELD_NAME not in request.POST): context[REDIRECT_FIELD_NAME] = reverse('admin:index', current_app=self.name)
+                context.update({ 'ldap_activated' : AuthentaConfig.ldap_activated })
+                context.update(extra_context or {})
+
+                if current_url == 'ldap_login':
+                    from .forms import LDAPAuthenticationForm
+                    login_form = LDAPAuthenticationForm
+                else:
+                    from django.contrib.admin.forms import AdminAuthenticationForm
+                    login_form = AdminAuthenticationForm
+
+                defaults = {
+                    'extra_context': context,
+                    'authentication_form': self.login_form or login_form,
+                    'template_name': self.login_template or 'admin/login.html',
+                }
+                request.current_app = self.name
+
+                from django.contrib.auth.views import LoginView
+                return LoginView.as_view(**defaults)(request)
+
+            def get_urls(self):
+                urlpatterns = super(AuthentaAdminSite, self).get_urls()
+                from django.conf.urls import url
+                urlpatterns.append(url(r'^login/ldap/$', self.login, name='ldap_login'))
+                return urlpatterns
+
+        mysite = AuthentaAdminSite()
+        admin.site = mysite
+        sites.site = mysite
 
 if hasattr(settings, 'AUTHENTA_SETTINGS'):
     for k,v in settings.AUTHENTA_SETTINGS.items():
