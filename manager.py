@@ -33,3 +33,9 @@ class UserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
         return self._create_user(password, **extra_fields)
+
+    def get_by_natural_key(self, username):
+        return self.get(**{self.model.USERNAME_FIELD: username}, authentication_method__in=['CREATESUPERUSER', 'BACKEND', 'FRONTEND'])
+
+    def get_by_method_additional(self, username):
+        return self.get(**{self.model.USERNAME_FIELD: username}, authentication_method='ADDITIONAL')

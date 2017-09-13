@@ -36,7 +36,7 @@ class AuthentaConfig(AppConfig):
     vprofile = True
     vprofilelist = True
 
-    mail_activation = True
+    mail_activation = False
 
     uniqidentity = 'email'
     requiredfields = ['username']
