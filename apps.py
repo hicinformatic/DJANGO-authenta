@@ -13,6 +13,7 @@ class AuthentaConfig(AppConfig):
 
     dir_logs = os.path.dirname(os.path.realpath(__file__))+'/logs'
     dir_task = os.path.dirname(os.path.realpath(__file__))+'/tasks'
+    dir_json = os.path.dirname(os.path.realpath(__file__))+'/jsons'
     loglvl = 7
     locallog = True
     syslog = False

@@ -63,4 +63,3 @@ class methodLDAP(Method):
         except Exception as e:
             return e
         return False
-

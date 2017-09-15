@@ -1,12 +1,10 @@
 from .apps import AuthentaConfig, logmethis
-
 import os
 
+logmethis(7, 'log_level: %s' % str(AuthentaConfig.loglvl))
 if not os.path.exists(AuthentaConfig.dir_logs): 
     os.makedirs(AuthentaConfig.dir_logs)
-
 logmethis(7, 'logs_directory: %s' % str(AuthentaConfig.dir_logs))
-logmethis(7, 'log_level: %s' % str(AuthentaConfig.loglvl))
 
 logmethis(7, 'tasks_directory: %s' % str(AuthentaConfig.dir_task))
 logmethis(7, 'binary_python: %s' % str(AuthentaConfig.python))
@@ -38,8 +36,12 @@ logmethis(7, 'is_staff_default: %s' % str(AuthentaConfig.isstaffdefault))
 logmethis(7, 'choices_method: %s' % '; '.join(str(i[1]) for i in AuthentaConfig.choices_method))
 logmethis(7, 'additional_methods: %s' % '; '.join(str(i[1]) for i in AuthentaConfig.additional_methods))
 
+if not os.path.exists(AuthentaConfig.dir_json):
+    os.makedirs(AuthentaConfig.dir_json)
+logmethis(7, 'jsons_directory: %s' % str(AuthentaConfig.dir_json))
+
 if AuthentaConfig.ldap_activated: 
-    if not os.path.exists(AuthentaConfig.dir_ldapcerts): 
+    if not os.path.exists(AuthentaConfig.dir_ldapcerts):
         os.makedirs(AuthentaConfig.dir_ldapcerts)
     logmethis(7, 'ldap_certificates_directory: %s' % str(AuthentaConfig.dir_ldapcerts))
 
