@@ -1,106 +1,36 @@
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
-from django.views.generic import DetailView
-from django.views.generic.base import TemplateView
-
-
-from django.urls import reverse
-from django.shortcuts import redirect
-from django.http import Http404  
-
+from django.views.generic import DetailView, TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
 
-
-#from django.contrib.auth.forms import AuthenticationForm
-
-
-
+from django.urls import reverse
+from django.shortcuts import redirect, render
+from django.http import Http404  
 
 from .apps import AuthentaConfig
 from .conversion import HybridResponseMixin
-from .models import User
-from .forms import SignUpForm#, LDAPAuthenticationForm
+from .models import User, Method
+from .forms import SignUpForm
 
+from .decorators import localcall, localcalloradmin, localcalloradminorstaff, localcalloradminorstafforlogin
+from .functions import order, start, running, complete, error, subtask
 
-class AuthentaLoginView(LoginView):
-    pass
-    #template_name = 'authenta/login.html'
-    #slug = None
+@localcalloradminorstaff
+def Task(request, command, task, extension, message=''):
+    if command == 'order':    return order(extension, task, message)
+    if command == 'start':    return start(extension, task, message)
+    if command == 'running':  return running(extension, task, message)
+    if command == 'complete': return complete(extension, task, message)
+    if command == 'error':    return error(extension, task, message)
 
-    #def get_context_data(self, **kwargs):
-    #    context = super(AuthentaLoginView, self).get_context_data(**kwargs)
-    #    context['object'] = {field.html_name : field.help_text for field in context['form']}
-    #    if AuthentaConfig.ldap_activated:
-    #        context['ldapform'] = LDAPAuthenticationForm()
-    #    context['app_path'] = self.request.get_full_path()
-    #    return context
-
-#class LoginView(SuccessURLAllowedHostsMixin, FormView):
-#    """
-#    Displays the login form and handles the login action.
-#    """
-#    form_class = AuthenticationForm
-#    authentication_form = None
-#    redirect_field_name = REDIRECT_FIELD_NAME
-#    template_name = 'registration/login.html'
-#    redirect_authenticated_user = False
-#    extra_context = None
-#
-#    @method_decorator(sensitive_post_parameters())
-#    @method_decorator(csrf_protect)
-#    @method_decorator(never_cache)
-#    def dispatch(self, request, *args, **kwargs):
-#        if self.redirect_authenticated_user and self.request.user.is_authenticated:
-#            redirect_to = self.get_success_url()
-#            if redirect_to == self.request.path:
-#                raise ValueError(
-#                    "Redirection loop for authenticated user detected. Check that "
-#                    "your LOGIN_REDIRECT_URL doesn't point to a login page."
-#                )
-#            return HttpResponseRedirect(redirect_to)
-#        return super(LoginView, self).dispatch(request, *args, **kwargs)
-#
-#    def get_success_url(self):
-#        url = self.get_redirect_url()
-#        return url or resolve_url(settings.LOGIN_REDIRECT_URL)
-#
-#    def get_redirect_url(self):
-#        """Return the user-originating redirect URL if it's safe."""
-#        redirect_to = self.request.POST.get(
-#            self.redirect_field_name,
-#            self.request.GET.get(self.redirect_field_name, '')
-#        )
-#        url_is_safe = is_safe_url(
-#            url=redirect_to,
-#            allowed_hosts=self.get_success_url_allowed_hosts(),
-#            require_https=self.request.is_secure(),
-#        )
-#        return redirect_to if url_is_safe else ''
-#
-#    def get_form_class(self):
-#        return self.authentication_form or self.form_class
-#
-#    def get_form_kwargs(self):
-#        kwargs = super(LoginView, self).get_form_kwargs()
-#        kwargs['request'] = self.request
-#        return kwargs
-#
-#    def form_valid(self, form):
-#        """Security check complete. Log the user in."""
-#        auth_login(self.request, form.get_user())
-#        return HttpResponseRedirect(self.get_success_url())
-#
-#    def get_context_data(self, **kwargs):
-#        context = super(LoginView, self).get_context_data(**kwargs)
-#        current_site = get_current_site(self.request)
-#        context.update({
-#            self.redirect_field_name: self.get_redirect_url(),
-#            'site': current_site,
-#            'site_name': current_site.name,
-#        })
-#        if self.extra_context is not None:
-#            context.update(self.extra_context)
-#        return context
+@localcalloradminorstaff
+class GenerateCache(HybridResponseMixin, TemplateView):
+    def render_to_response(self, context, **response_kwargs):
+        methods = Method.objects.filter(status=True, method=method)
+        jsonFile = "{}/{}.json".format(AuthentaConfig.dir_json, method)
+        with open(jsonFile, 'w') as outfile:
+            json.dump(methods, outfile, indent=4)
+        return self.render_to_json_response(context, **response_kwargs)
 
 if AuthentaConfig.vsignup:
     class SignUp(HybridResponseMixin, CreateView):

@@ -142,3 +142,19 @@ class User(AbstractUser):
         msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
         msg.attach_alternative(html_content, "text/html")
         msg.send()
+
+class Task(models.Model):
+    task = models.CharField(_('Task'), max_length=254, choices=AuthentaConfig.tasks, editable=False)
+    info = models.TextField(_('Information about the task'), blank=True, default=_('Ordered'), editable=False, null=True)
+    status = models.PositiveSmallIntegerField(_('Status'), choices=AuthentaConfig.status, default=1, editable=False, validators=[MinValueValidator(0),MaxValueValidator(5)])
+    error = models.TextField(_('Error encountered'), blank=True, editable=False, null=True)
+    updateby = models.CharField(_('Last update by'), blank=True, editable=False, max_length=254, null=True)
+    datecreate = models.DateTimeField(_('Creation date'), auto_now_add=True, editable=False)
+    dateupdate = models.DateTimeField(_('Last modification date'), auto_now=True, editable=False)
+
+    class Meta:
+        verbose_name        = AuthentaConfig.vn_task
+        verbose_name_plural = AuthentaConfig.vpn_task
+
+    def __str__(self):
+        return self.get_task_display()

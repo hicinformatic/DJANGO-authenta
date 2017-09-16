@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse
 
 from .models import User as CustomUser
 from .models import Group as CustomGroup
-from .models import Method
+from .models import Method, Task
 from .apps import AuthentaConfig
 
 import unicodedata
@@ -57,6 +57,7 @@ error_status.short_description = _('In error')
 error_status.boolean = True
 @admin.register(Method)
 class MethodAdmin(admin.ModelAdmin):
+    change_list_template = AuthentaConfig.template_changelist
     form = MethodAdminForm
     fieldsets = ((_('Globals'), { 'fields': ('method', 'name', 'status'), }),)
     filter_horizontal = ('groups', 'permissions')
@@ -91,3 +92,8 @@ class MethodAdmin(admin.ModelAdmin):
         try: self.message_user(request, mark_safe(msg_warning), 'warning')
         except NameError: self.message_user(request, _('All authentications are ready'), 'success')
     checkAuthentications.short_description = _('Check the authentications status')
+
+@admin.register(Task)
+class TaskAdmin(admin.ModelAdmin):
+    list_display = ( 'task', 'info', 'status', 'dateupdate', )
+    readonly_fields = ( 'task', 'info', 'status', 'error', 'updateby', 'datecreate', 'dateupdate', )
