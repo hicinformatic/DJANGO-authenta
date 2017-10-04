@@ -1,10 +1,10 @@
 from .apps import AuthentaConfig, logmethis
 import os
 
-logmethis(7, 'log_level: %s' % str(AuthentaConfig.loglvl))
 if not os.path.exists(AuthentaConfig.dir_logs): 
     os.makedirs(AuthentaConfig.dir_logs)
 logmethis(7, 'logs_directory: %s' % str(AuthentaConfig.dir_logs))
+logmethis(7, 'log_level: %s' % str(AuthentaConfig.loglvl))
 
 logmethis(7, 'tasks_directory: %s' % str(AuthentaConfig.dir_task))
 logmethis(7, 'binary_python: %s' % str(AuthentaConfig.python))

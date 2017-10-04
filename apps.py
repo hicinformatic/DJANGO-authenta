@@ -87,6 +87,7 @@ class AuthentaConfig(AppConfig):
     facebook_activated = False
 
     def ready(self):
+        from . import check
         from . import signals
 
         from django.views.decorators.cache import never_cache

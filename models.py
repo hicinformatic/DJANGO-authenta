@@ -97,7 +97,7 @@ class Method(models.Model):
         self.save()
         return True
 
-    def generateCache(self):
+    def generateCache():
         for method in AuthentaConfig.additional_methods:
             methods = Method.objects.filter(status=True, method=method[0])
             file_json = '{}/{}_{}'.format(AuthentaConfig.dir_json, method[0], AuthentaConfig.cache_methods)
