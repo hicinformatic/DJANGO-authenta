@@ -55,6 +55,7 @@ def error_status(obj):
     return True if obj.error is None else False
 error_status.short_description = _('In error')
 error_status.boolean = True
+
 @admin.register(Method)
 class MethodAdmin(admin.ModelAdmin):
     change_list_template = AuthentaConfig.template_changelist

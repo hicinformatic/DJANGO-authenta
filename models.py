@@ -1,23 +1,19 @@
 from django.db import models
-#from django.contrib.auth.models import PermissionsMixin,  Permission
-#from django.contrib.auth.base_user import AbstractBaseUser
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import AbstractUser, Group, Permission
-from django.contrib.auth.validators import ASCIIUsernameValidator, UnicodeUsernameValidator
-from django.core.validators import MinValueValidator, MaxValueValidator, MinLengthValidator, MaxLengthValidator,RegexValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.urls import reverse
-from django.utils import six
 
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import get_template
 from django.template import Context
 #from django.core.mail import send_mail
+from django.core import serializers
 
-import unicodedata
-
-from . import check
 from .manager import UserManager
 from .apps import AuthentaConfig, logmethis
+
+import unicodedata
 
 if AuthentaConfig.ldap_activated: from .methods.ldap import methodLDAP
 
@@ -101,7 +97,18 @@ class Method(models.Model):
         self.save()
         return True
 
-#class User(AbstractBaseUser, PermissionsMixin):
+    def generateCache(self):
+        for method in AuthentaConfig.additional_methods:
+            methods = Method.objects.filter(status=True, method=method[0])
+            file_json = '{}/{}_{}'.format(AuthentaConfig.dir_json, method[0], AuthentaConfig.cache_methods)
+            with open(file_json, 'w') as outfile:
+                json_serializer = serializers.get_serializer('json')()
+                json_serializer.serialize(methods, stream=outfile, indent=4)
+
+    def save(self, *args, **kwargs):
+        super(Method, self).save(*args, **kwargs)
+        self.generateCache()
+
 class User(AbstractUser):
     username = models.CharField(_('Username'), blank=AuthentaConfig.usernamenull, max_length=254, null=AuthentaConfig.usernamenull, unique=AuthentaConfig.usernameuniq, validators=[AbstractUser.username_validator],)
     email = models.EmailField(_('Email address'), blank=AuthentaConfig.emailnull, null=AuthentaConfig.emailnull, unique=AuthentaConfig.emailuniq)
@@ -130,23 +137,23 @@ class User(AbstractUser):
         self.email = self.__class__.objects.normalize_email(self.email)
 
     def get_absolute_url(self):
-        return reverse('authenta:Profile', args=[str(self.id), '.html'])
+        return reverse(AuthentaConfig.vabsolute, args=[str(self.id), AuthentaConfig.vextension])
 
     def sendMail(self, subject, tpl_html, tpl_txt):
         htmly     = get_template(tpl_html)
         plaintext = get_template(tpl_txt)
         d = Context(self)
-        subject, from_email, to = subject, 'from@example.com', self.email
+        subject, from_email, to = subject, AuthentaConfig.mail_from, self.email
         text_content = plaintext.render(d)
         html_content = htmly.render(d)
         msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
-        msg.attach_alternative(html_content, "text/html")
+        msg.attach_alternative(html_content, AuthentaConfig.contenttype_html)
         msg.send()
 
 class Task(models.Model):
     task = models.CharField(_('Task'), max_length=254, choices=AuthentaConfig.tasks, editable=False)
     info = models.TextField(_('Information about the task'), blank=True, default=_('Ordered'), editable=False, null=True)
-    status = models.PositiveSmallIntegerField(_('Status'), choices=AuthentaConfig.status, default=1, editable=False, validators=[MinValueValidator(0),MaxValueValidator(5)])
+    status = models.CharField(_('Status'), max_length=7, choices=AuthentaConfig.status, default='order', editable=False)
     error = models.TextField(_('Error encountered'), blank=True, editable=False, null=True)
     updateby = models.CharField(_('Last update by'), blank=True, editable=False, max_length=254, null=True)
     datecreate = models.DateTimeField(_('Creation date'), auto_now_add=True, editable=False)

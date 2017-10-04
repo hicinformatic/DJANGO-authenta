@@ -1,5 +1,38 @@
+from django.shortcuts import render
+
 from .apps import AuthentaConfig
-from .models import Task
+from .models import Task, Method
+
+# ------------------------------------------- #
+# CONTENT TYPE - PROXY
+# ------------------------------------------- #
+# Content type orientation
+# ------------------------------------------- #
+def responseKO(contenttype, task, code, error):
+    if contenttype == 'txt':
+        tpl = _('status: KO\ntask: {ntask}\nname: {name}\ntechnical: {technical}\ncode: {code}\nerror: {error}')
+        datas = {'task': task, 'name': AuthentaConfig.tasks[int(task)][0], 'technical': AuthentaConfig.tasks[int(task)][1], 'code': code, 'error': error}
+        return HttpResponse(tpl.format(**datas), status_code=code, content_type=AuthentaConfig.contenttype_txt)
+    if contenttype == 'json': 
+        datas = { 'task': task, 'name': AuthentaConfig.tasks[int(task)][0], 'technical': AuthentaConfig.tasks[int(task)][1], 'code': code, 'error': error}
+        return JsonResponse(datas, safe=False)
+    else:
+        tpl = _('status: KO\ntask: {ntask}\nname: {name}\ntechnical: {technical}\ncode: {code}\nerror: {error}')
+        datas = { 'task': task, 'name': AuthentaConfig.tasks[int(task)][0], 'technical': AuthentaConfig.tasks[int(task)][1], 'code': code, 'error': error}
+        return render(request, 'Authenta/failed.html', context=datas)
+
+def responseOK(contenttype, task, message):
+    if contenttype == 'txt':
+        tpl = _('status: KO\ntask: {task}\nname: {name}\ntechnical: {technical}\nmessage: {message}')
+        datas = {'task': task, 'name': AuthentaConfig.tasks[int(task)][0], 'technical': AuthentaConfig.tasks[int(task)][1], 'message': message}
+        return HttpResponse(tpl.format(**datas), content_type=AuthentaConfig.contenttype_txt)
+    if contenttype == 'json':
+        datas = { 'task': task, 'name': AuthentaConfig.tasks[int(task)][0], 'technical': AuthentaConfig.tasks[int(task)][1], 'message': message}
+        return JsonResponse(datas, safe=False)
+    else:
+        tpl = _('status: KO\ntask: {ntask}\nname: {name}\ntechnical: {technical}\nmessage: {message}')
+        datas = { 'task': task, 'name': AuthentaConfig.tasks[int(task)][0], 'technical': AuthentaConfig.tasks[int(task)][1], 'code': code, 'error': error}
+        return render(request, 'Authenta/success.html', context=datas)
 
 """
 -------------------------------------------------------------------
@@ -55,9 +88,9 @@ def startTask(task):
 def error(contenttype, task, error):
     try: script = AuthentaConfig.tasks[int(task)][0]
     except NameError: return responseKO('html', task, 404, _('Task not found'))
-    try: thetask = Task.objects.filter(task=script, status__in=[1, 2, 3]).latest('dateupdate')
+    try: thetask = Task.objects.filter(task=script, status__in=['order', 'start', 'running']).latest('dateupdate')
     except Task.DoesNotExist: return responseKO(contenttype, task, 403,  _('No task'))
-    thetask.status = 0
+    thetask.status = 'error'
     if error is None or error == '': thetask.error = _('Error')
     else: thetask.error = error
     thetask.save()
@@ -77,11 +110,11 @@ def order(contenttype, task, message):
         if isinstance(delta, int):
             if delta > 40: delta = datetime.today() - timedelta(seconds=delta)
             else:            delta = datetime.today() - timedelta(days=delta)
-            thetask = Task.objects.get(task=script, status__in=[1,2,3], dateupdate__gte=delta)
+            thetask = Task.objects.get(task=script, status__in=['order', 'start', 'running'], dateupdate__gte=delta)
         elif delta == 'Monthly':
-            thetask = Task.objects.get(task=script, status__in=[1,2,3], dateupdate__year=datetime.now().year, dateupdate__month=datetime.now().month)
+            thetask = Task.objects.get(task=script, status__in=['order', 'start', 'running'], dateupdate__year=datetime.now().year, dateupdate__month=datetime.now().month)
         elif delta == 'Annually':
-            thetask = Task.objects.get(task=script, status__in=[1,2,3], dateupdate__year=datetime.now().year)
+            thetask = Task.objects.get(task=script, status__in=['order', 'start', 'running'], dateupdate__year=datetime.now().year)
         else:
             return responseKO(contenttype, task, 403, _('Delta not available'))
     except Task.DoesNotExist:
@@ -122,7 +155,7 @@ def start(contenttype, task, message):
 def running(contenttype, task, message):
     try: script = AuthentaConfig.tasks[int(task)][0]
     except NameError: return responseKO('html', task, 404, _('Task not found'))
-    try: thetask = Task.objects.filter(task=script, status__in=[2, 3]).latest('dateupdate')
+    try: thetask = Task.objects.filter(task=script, status__in=['start', 'running']).latest('dateupdate')
     except Task.DoesNotExist: return responseKO(contenttype, task, 403,  _('No task running'))
     thetask.status = 3
     if message is None or message == '': thetask.info = _('Running')
@@ -138,7 +171,7 @@ def running(contenttype, task, message):
 def complete(contenttype, task, message):
     try: script = AuthentaConfig.tasks[int(task)][0]
     except NameError: return responseKO('html', task, 404, _('Task not found'))
-    try: thetask = Task.objects.filter(task=script, status__in=[2, 3]).latest('dateupdate')
+    try: thetask = Task.objects.filter(task=script, status__in=['start', 'running']).latest('dateupdate')
     except Task.DoesNotExist: return responseKO(contenttype, task, 403,  _('No task to complete'))
     thetask.status = 4
     if message is None or message == '': thetask.info = _('Complete')
@@ -157,7 +190,5 @@ def subtask(contenttype, task, secondtask):
     try: secondtaskname = cAuthentaConfig.subtasks[script][int(secondtask)]
     except Exception: return responseKO(contenttype, task, 404, _('Subtask not found'))
     result = getattr(sys.modules[__name__], secondtaskname)(contenttype, task, script)
-    if result is True:
-        return responseOK(contenttype, task, secondtaskname)
-    else:
-        return responseKO(contenttype, task, 500, result)
+    if result is True: return responseOK(contenttype, task, secondtaskname)
+    else: return responseKO(contenttype, task, 500, result)

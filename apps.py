@@ -37,12 +37,23 @@ class AuthentaConfig(AppConfig):
     vsignout = True
     vprofile = True
     vprofilelist = True
-    
+    vabsolute = 'authenta:Profile'
+    vextension = '.html'
+
+    contenttype_html = 'text/html'
+    contenttype_csv = 'text/csv'
+    contenttype_txt = 'text/plain'
+    contenttype_svg = 'image/svg+xml'
+    contenttype_js = 'application/javascript'
+
     template_login = 'authenta/admin/login.html'
     template_changelist = 'authenta/admin/change_list_method.html'
     template_generatecache = 'authenta/admin/generate_cache.html'
 
+    cache_methods = 'methods.json'
+
     mail_activation = False
+    mail_from = 'from@example.com'
 
     uniqidentity = 'email'
     requiredfields = ['username']
@@ -60,18 +71,13 @@ class AuthentaConfig(AppConfig):
     additional_methods = []
     admin_override = False
 
+    status = (('error', _('In error')), ('order', _('Ordered')), ('start', _('Started')), ('running', _('Running')), ('complete', _('Complete')), )
     tasks = (
-        ('TRK_check_os',        _('check(OS)')),
+        ('check_os',        _('check(OS)')),
+        ('generate_cache',  _('Generate cache')),
     )
     subtasks = {}
     deltas = {}
-    status = (
-        (0, _('In error')),
-        (1, _('Ordered')),
-        (2, _('Started')),
-        (3, _('Running')),
-        (4, _('Complete')),
-    )
 
     ldap_activated = True
     choices_ldapscope = (('SCOPE_BASE', 'base (scope=base)'), ('SCOPE_ONELEVEL', 'onelevel (scope=onelevel)'), ('SCOPE_SUBTREE', 'subtree (scope=subtree)'))
@@ -127,7 +133,8 @@ class AuthentaConfig(AppConfig):
             def generateCache(self, request):
                 from django.shortcuts import render
                 from .models import Method
-                context = dict( opts=Method._meta, title='Cache')
+                context = dict( opts=Method._meta, title='Cache', has_permission=True)
+                Method.generateCache()
                 return render(request, AuthentaConfig.template_generatecache, context)
 
             def get_urls(self):

@@ -15,6 +15,8 @@ from .forms import SignUpForm
 from .decorators import localcall, localcalloradmin, localcalloradminorstaff, localcalloradminorstafforlogin
 from .functions import order, start, running, complete, error, subtask
 
+from django.core import serializers
+
 @localcalloradminorstaff
 def Task(request, command, task, extension, message=''):
     if command == 'order':    return order(extension, task, message)
@@ -23,14 +25,19 @@ def Task(request, command, task, extension, message=''):
     if command == 'complete': return complete(extension, task, message)
     if command == 'error':    return error(extension, task, message)
 
-@localcalloradminorstaff
+
 class GenerateCache(HybridResponseMixin, TemplateView):
-    def render_to_response(self, context, **response_kwargs):
-        methods = Method.objects.filter(status=True, method=method)
-        jsonFile = "{}/{}.json".format(AuthentaConfig.dir_json, method)
-        with open(jsonFile, 'w') as outfile:
-            json.dump(methods, outfile, indent=4)
-        return self.render_to_json_response(context, **response_kwargs)
+    template_name = 'authenta/method.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(GenerateCache, self).get_context_data(**kwargs)
+        methods = Method.objects.filter(status=True)
+        context['object'] = {m.name : m.method for m in methods}
+        file_json = '{}/{}'.format(AuthentaConfig.dir_json, AuthentaConfig.cache_methods)
+        with open(file_json, 'w') as outfile:
+            json_serializer = serializers.get_serializer('json')()
+            json_serializer.serialize(methods, stream=outfile, indent=4)
+        return context
 
 if AuthentaConfig.vsignup:
     class SignUp(HybridResponseMixin, CreateView):
