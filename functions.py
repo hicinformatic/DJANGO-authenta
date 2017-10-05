@@ -1,7 +1,13 @@
 from django.shortcuts import render
+from django.http import HttpResponse, JsonResponse
+from django.template import loader, Context
+from django.utils.translation import ugettext_lazy as _
 
 from .apps import AuthentaConfig
 from .models import Task, Method
+
+from datetime import datetime, timedelta
+import json, subprocess, sys, urllib.parse
 
 # ------------------------------------------- #
 # CONTENT TYPE - PROXY
@@ -11,28 +17,30 @@ from .models import Task, Method
 def responseKO(contenttype, task, code, error):
     if contenttype == 'txt':
         tpl = _('status: KO\ntask: {ntask}\nname: {name}\ntechnical: {technical}\ncode: {code}\nerror: {error}')
-        datas = {'task': task, 'name': AuthentaConfig.tasks[int(task)][0], 'technical': AuthentaConfig.tasks[int(task)][1], 'code': code, 'error': error}
+        datas = {'task': task, 'name': AuthentaConfig.tasks[int(task)][1], 'technical': AuthentaConfig.tasks[int(task)][0], 'code': code, 'error': error}
         return HttpResponse(tpl.format(**datas), status_code=code, content_type=AuthentaConfig.contenttype_txt)
     if contenttype == 'json': 
-        datas = { 'task': task, 'name': AuthentaConfig.tasks[int(task)][0], 'technical': AuthentaConfig.tasks[int(task)][1], 'code': code, 'error': error}
+        datas = { 'task': task, 'name': AuthentaConfig.tasks[int(task)][1], 'technical': AuthentaConfig.tasks[int(task)][0], 'code': code, 'error': error}
         return JsonResponse(datas, safe=False)
     else:
         tpl = _('status: KO\ntask: {ntask}\nname: {name}\ntechnical: {technical}\ncode: {code}\nerror: {error}')
-        datas = { 'task': task, 'name': AuthentaConfig.tasks[int(task)][0], 'technical': AuthentaConfig.tasks[int(task)][1], 'code': code, 'error': error}
-        return render(request, 'Authenta/failed.html', context=datas)
+        context = Context({ 'task': task, 'name': AuthentaConfig.tasks[int(task)][1], 'technical': AuthentaConfig.tasks[int(task)][0], 'code': code, 'error': error})
+        template = loader.get_template('authenta/failed.html')
+        return HttpResponse(template.render(context))
 
 def responseOK(contenttype, task, message):
     if contenttype == 'txt':
         tpl = _('status: KO\ntask: {task}\nname: {name}\ntechnical: {technical}\nmessage: {message}')
-        datas = {'task': task, 'name': AuthentaConfig.tasks[int(task)][0], 'technical': AuthentaConfig.tasks[int(task)][1], 'message': message}
+        datas = {'task': task, 'name': AuthentaConfig.tasks[int(task)][1], 'technical': AuthentaConfig.tasks[int(task)][0], 'message': message}
         return HttpResponse(tpl.format(**datas), content_type=AuthentaConfig.contenttype_txt)
     if contenttype == 'json':
-        datas = { 'task': task, 'name': AuthentaConfig.tasks[int(task)][0], 'technical': AuthentaConfig.tasks[int(task)][1], 'message': message}
+        datas = { 'task': task, 'name': AuthentaConfig.tasks[int(task)][1], 'technical': AuthentaConfig.tasks[int(task)][0], 'message': message}
         return JsonResponse(datas, safe=False)
     else:
         tpl = _('status: KO\ntask: {ntask}\nname: {name}\ntechnical: {technical}\nmessage: {message}')
-        datas = { 'task': task, 'name': AuthentaConfig.tasks[int(task)][0], 'technical': AuthentaConfig.tasks[int(task)][1], 'code': code, 'error': error}
-        return render(request, 'Authenta/success.html', context=datas)
+        context = Context({ 'task': task, 'name': AuthentaConfig.tasks[int(task)][1], 'technical': AuthentaConfig.tasks[int(task)][0], 'code': code, 'error': error})
+        template = loader.get_template('authenta/failed.html')
+        return HttpResponse(template.render(context))
 
 """
 -------------------------------------------------------------------
@@ -56,9 +64,9 @@ Error encountered
 def checkTask(task):
     check = '{0} {1}/{2}{3} {4} {5}'.format(
         AuthentaConfig.binary,
-        AuthentaConfig.taskdir,
+        AuthentaConfig.dir_task,
         AuthentaConfig.tasks[0][0],
-        AuthentaConfig.checkext, task, 
+        AuthentaConfig.backext, task, 
         AuthentaConfig.killscript)
     try: subprocess.check_call(check, shell=True)
     except subprocess.CalledProcessError: return False
@@ -73,7 +81,7 @@ def startTask(task):
     bgtask = '{0} {1} {2}/{3}.py {4} {5}'.format(
         AuthentaConfig.backstart,
         AuthentaConfig.python,
-        AuthentaConfig.taskdir,
+        AuthentaConfig.dir_task,
         AuthentaConfig.tasks[int(task)][0],
         AuthentaConfig.port, AuthentaConfig.backend)
     try: subprocess.check_call(bgtask, shell=True)
@@ -103,25 +111,26 @@ def error(contenttype, task, error):
 # ------------------------------------------- #
 def order(contenttype, task, message):
     try: script = AuthentaConfig.tasks[int(task)][0]
-    except NameError: return responseKO('html', task, 404, _('Task not found'))
-    try: delta = cAuthentaConfig.deltas[script]
-    except NameError: return responseKO('html', task, 404, _('Delta not found'))
+    except Exception: return responseKO(contenttype, task, 404, _('Task not found'))
+    try: delta = AuthentaConfig.deltas[script]
+    except Exception: return responseKO(contenttype, task, 404, _('Delta not found'))
     try:
         if isinstance(delta, int):
             if delta > 40: delta = datetime.today() - timedelta(seconds=delta)
-            else:            delta = datetime.today() - timedelta(days=delta)
-            thetask = Task.objects.get(task=script, status__in=['order', 'start', 'running'], dateupdate__gte=delta)
+            else: delta = datetime.today() - timedelta(days=delta)
+            thetask = Task.objects.get(task=script, status__in=[AuthentaConfig.status[1][0], AuthentaConfig.status[2][0], AuthentaConfig.status[3][0]], dateupdate__gte=delta)
         elif delta == 'Monthly':
-            thetask = Task.objects.get(task=script, status__in=['order', 'start', 'running'], dateupdate__year=datetime.now().year, dateupdate__month=datetime.now().month)
+            thetask = Task.objects.get(task=script, status__in=[AuthentaConfig.status[1][0], AuthentaConfig.status[2][0], AuthentaConfig.status[3][0]], dateupdate__year=datetime.now().year, dateupdate__month=datetime.now().month)
         elif delta == 'Annually':
-            thetask = Task.objects.get(task=script, status__in=['order', 'start', 'running'], dateupdate__year=datetime.now().year)
+            thetask = Task.objects.get(task=script, status__in=[AuthentaConfig.status[1][0], AuthentaConfig.status[2][0], AuthentaConfig.status[3][0]], dateupdate__year=datetime.now().year)
         else:
             return responseKO(contenttype, task, 403, _('Delta not available'))
     except Task.DoesNotExist:
         thetask = Task(task=script)
-        if message is not None or message != '': thetask.info = message
+        thetask.status = AuthentaConfig.status[1][0]
+        if message is not None or message != '': thetask.info = urllib.parse.unquote_plus(message)
         thetask.save()
-    if thetask.status >= 1:
+    if thetask.status != 'error':
         if checkTask(script) is True:
             if startTask(task) is True:
                 return responseOK(contenttype, task, message)
@@ -139,11 +148,10 @@ def order(contenttype, task, message):
 def start(contenttype, task, message):
     try: script = AuthentaConfig.tasks[int(task)][0]
     except NameError: return responseKO('html', task, 404, _('Task not found'))
-    try: thetask = Task.objects.filter(task=script, status=1).latest('dateupdate')
+    try: thetask = Task.objects.filter(task=script, status=AuthentaConfig.status[1][0]).latest('dateupdate')
     except Task.DoesNotExist: return responseKO(contenttype, task, 403,  _('No task to start'))
-    thetask.status = 2
-    if message is None or message == '': thetask.info = _('Started')
-    else: thetask.info = message
+    thetask.status = AuthentaConfig.status[2][0]
+    if message is not None or message != '': thetask.info = urllib.parse.unquote_plus(message)
     thetask.save()
     return responseOK(contenttype, task, message)
 
@@ -155,11 +163,10 @@ def start(contenttype, task, message):
 def running(contenttype, task, message):
     try: script = AuthentaConfig.tasks[int(task)][0]
     except NameError: return responseKO('html', task, 404, _('Task not found'))
-    try: thetask = Task.objects.filter(task=script, status__in=['start', 'running']).latest('dateupdate')
+    try: thetask = Task.objects.filter(task=script, status__in=[AuthentaConfig.status[2][0], AuthentaConfig.status[3][0]]).latest('dateupdate')
     except Task.DoesNotExist: return responseKO(contenttype, task, 403,  _('No task running'))
-    thetask.status = 3
-    if message is None or message == '': thetask.info = _('Running')
-    else: thetask.info = message
+    thetask.status = AuthentaConfig.status[3][0]
+    if message is not None or message != '': thetask.info = urllib.parse.unquote_plus(message)
     thetask.save()
     return responseOK(contenttype, task, message)
 
@@ -171,11 +178,10 @@ def running(contenttype, task, message):
 def complete(contenttype, task, message):
     try: script = AuthentaConfig.tasks[int(task)][0]
     except NameError: return responseKO('html', task, 404, _('Task not found'))
-    try: thetask = Task.objects.filter(task=script, status__in=['start', 'running']).latest('dateupdate')
+    try: thetask = Task.objects.filter(task=script, status__in=[AuthentaConfig.status[2][0], AuthentaConfig.status[3][0]]).latest('dateupdate')
     except Task.DoesNotExist: return responseKO(contenttype, task, 403,  _('No task to complete'))
-    thetask.status = 4
-    if message is None or message == '': thetask.info = _('Complete')
-    else: thetask.info = message
+    thetask.status = AuthentaConfig.status[4][0]
+    if message is not None or message != '': thetask.info = urllib.parse.unquote_plus(message)
     thetask.save()
     return responseOK(contenttype, task, message)
 
@@ -187,7 +193,7 @@ def complete(contenttype, task, message):
 def subtask(contenttype, task, secondtask):
     try: script = AuthentaConfig.tasks[int(task)][0]
     except NameError: return responseKO(contenttype, task, 404, _('Task not found'))
-    try: secondtaskname = cAuthentaConfig.subtasks[script][int(secondtask)]
+    try: secondtaskname = AuthentaConfig.subtasks[script][int(secondtask)]
     except Exception: return responseKO(contenttype, task, 404, _('Subtask not found'))
     result = getattr(sys.modules[__name__], secondtaskname)(contenttype, task, script)
     if result is True: return responseOK(contenttype, task, secondtaskname)

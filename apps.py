@@ -23,8 +23,9 @@ class AuthentaConfig(AppConfig):
     backend = '&'
     backext = '.sh'
     killscript = 3600
-    host = 'localhost'
-    ip = '127.0.0.1'
+    host = ['localhost', 'localhost:8000']
+    ip = ['127.0.0.1',]
+    port = 8000
 
     vn_method = _('authentication method')
     vpn_method = _('authentication methods')
@@ -49,6 +50,9 @@ class AuthentaConfig(AppConfig):
     template_login = 'authenta/admin/login.html'
     template_changelist = 'authenta/admin/change_list_method.html'
     template_generatecache = 'authenta/admin/generate_cache.html'
+
+    template_txt = '{}:{}'
+    separator_txt = '|'
 
     cache_methods = 'methods.json'
 
@@ -77,7 +81,9 @@ class AuthentaConfig(AppConfig):
         ('generate_cache',  _('Generate cache')),
     )
     subtasks = {}
-    deltas = {}
+    deltas = {
+        'generate_cache': 3600,
+    }
 
     ldap_activated = True
     choices_ldapscope = (('SCOPE_BASE', 'base (scope=base)'), ('SCOPE_ONELEVEL', 'onelevel (scope=onelevel)'), ('SCOPE_SUBTREE', 'subtree (scope=subtree)'))

@@ -1,0 +1,10 @@
+{% load authenta_filters %}
+<ul>
+{% for object in object_list %}
+    {% for field in fields %}
+    <li>{{ object|getattr:field }}</li>
+    {% endfor %}
+{% empty %}
+    <li>No articles yet.</li>
+{% endfor %}
+</ul>

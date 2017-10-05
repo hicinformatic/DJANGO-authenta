@@ -8,7 +8,7 @@ from django.shortcuts import redirect, render
 from django.http import Http404  
 
 from .apps import AuthentaConfig
-from .conversion import HybridResponseMixin
+from .conversion import HybridResponseMixin, HybridResponseMixinNew
 from .models import User, Method
 from .forms import SignUpForm
 
@@ -19,12 +19,11 @@ from django.core import serializers
 
 @localcalloradminorstaff
 def Task(request, command, task, extension, message=''):
-    if command == 'order':    return order(extension, task, message)
-    if command == 'start':    return start(extension, task, message)
-    if command == 'running':  return running(extension, task, message)
+    if command == 'order': return order(extension, task, message)
+    if command == 'start': return start(extension, task, message)
+    if command == 'running': return running(extension, task, message)
     if command == 'complete': return complete(extension, task, message)
-    if command == 'error':    return error(extension, task, message)
-
+    if command == 'error': return error(extension, task, message)
 
 class GenerateCache(HybridResponseMixin, TemplateView):
     template_name = 'authenta/method.html'
@@ -104,6 +103,16 @@ if AuthentaConfig.vsignout:
             context = super(SignOut, self).get_context_data(**kwargs)
             context['object'] = { "status" : "disconnected" }
             return context
+
+class MethodList(HybridResponseMixinNew, ListView):
+    model = Method
+    template_name = 'authenta/list.html'
+    slug = None
+
+    def get_context_data(self, **kwargs):
+        context = super(MethodList, self).get_context_data(**kwargs)
+        context['fields'] = ['id', 'name']
+        return context
 
 def TestView(request):
     from django.core.mail import send_mail
