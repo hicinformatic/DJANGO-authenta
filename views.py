@@ -2,14 +2,15 @@ from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 from django.views.generic import DetailView, TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
+from django.utils.decorators import method_decorator
 
 from django.urls import reverse
 from django.shortcuts import redirect, render
 from django.http import Http404  
 
 from .apps import AuthentaConfig
-from .conversion import HybridResponseMixin, HybridResponseMixinNew
-from .models import User, Method
+from .conversion import HybridFormResponseMixin, HybridResponseMixin
+from .models import User, Method, Task
 from .forms import SignUpForm
 
 from .decorators import localcall, localcalloradmin, localcalloradminorstaff, localcalloradminorstafforlogin
@@ -17,16 +18,20 @@ from .functions import order, start, running, complete, error, subtask
 
 from django.core import serializers
 
-@localcalloradminorstaff
-def Task(request, command, task, extension, message=''):
-    if command == 'order': return order(extension, task, message)
-    if command == 'start': return start(extension, task, message)
-    if command == 'running': return running(extension, task, message)
-    if command == 'complete': return complete(extension, task, message)
-    if command == 'error': return error(extension, task, message)
+class objectDict(object):
+    def __init__(self, d):
+        self.__dict__ = d
+
+#@localcalloradminorstaff
+#def Task(request, command, task, extension, message=''):
+#    if command == 'order': return order(extension, task, message)
+#    if command == 'start': return start(extension, task, message)
+#    if command == 'running': return running(extension, task, message)
+#    if command == 'complete': return complete(extension, task, message)
+#    if command == 'error': return error(extension, task, message)
 
 class GenerateCache(HybridResponseMixin, TemplateView):
-    template_name = 'authenta/method.html'
+    template_name = 'authenta/method/method.html'
 
     def get_context_data(self, **kwargs):
         context = super(GenerateCache, self).get_context_data(**kwargs)
@@ -39,7 +44,7 @@ class GenerateCache(HybridResponseMixin, TemplateView):
         return context
 
 if AuthentaConfig.vsignup:
-    class SignUp(HybridResponseMixin, CreateView):
+    class SignUp(HybridFormResponseMixin, CreateView):
         form_class = SignUpForm
         template_name = 'authenta/form.html'
 
@@ -51,11 +56,10 @@ if AuthentaConfig.vsignup:
 
         def get_context_data(self, **kwargs):
             context = super(SignUp, self).get_context_data(**kwargs)
-            context['object'] = {field.html_name : field.help_text for field in context['form']}
             return context
 
 if AuthentaConfig.vsignin:
-    class SignIn(HybridResponseMixin, LoginView):
+    class SignIn(HybridFormResponseMixin, LoginView):
         template_name = 'authenta/form.html'
 
         def dispatch(self, request, *args, **kwargs):
@@ -66,7 +70,6 @@ if AuthentaConfig.vsignin:
 
         def get_context_data(self, **kwargs):
             context = super(SignIn, self).get_context_data(**kwargs)
-            context['object'] = {field.html_name : field.help_text for field in context['form']}
             return context
 
         def get_success_url(self):
@@ -82,7 +85,7 @@ if AuthentaConfig.vprofilelist:
 
         def get_context_data(self, **kwargs):
             context = super(ProfileList, self).get_context_data(**kwargs)
-            context['object'] = {user.id : user.username for user in context['object_list']}
+            context['fields'] = ['id', 'username']
             return context
 
 if AuthentaConfig.vprofile:
@@ -92,7 +95,8 @@ if AuthentaConfig.vprofile:
 
         def get_context_data(self, **kwargs):
             context = super(Profile, self).get_context_data(**kwargs)
-            context['object'] = { "username" : self.object.username, }
+            context['fields'] = ['username', ]
+            context['object_list'] = [objectDict({ 'username': self.object.username, })]
             return context
 
 if AuthentaConfig.vsignout:
@@ -101,17 +105,30 @@ if AuthentaConfig.vsignout:
 
         def get_context_data(self, **kwargs):
             context = super(SignOut, self).get_context_data(**kwargs)
-            context['object'] = { "status" : "disconnected" }
+            context['fields'] = ['status', ]
+            context['object_list'] = [objectDict({ 'status': 'disconnected' })]
             return context
 
-class MethodList(HybridResponseMixinNew, ListView):
+@method_decorator(localcalloradminorstaff, name='dispatch')
+class MethodList(HybridResponseMixin, ListView):
     model = Method
-    template_name = 'authenta/list.html'
+    template_name = 'authenta/method/list.html'
     slug = None
 
     def get_context_data(self, **kwargs):
         context = super(MethodList, self).get_context_data(**kwargs)
         context['fields'] = ['id', 'name']
+        return context
+
+@method_decorator(localcalloradminorstaff, name='dispatch')
+class TaskDetail(HybridResponseMixin, DetailView):
+    model = Task
+    template_name = 'authenta/method/detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(TaskDetail, self).get_context_data(**kwargs)
+        context['fields'] = ['task', 'info', 'status', 'error']
+        context['object_list'] = [objectDict({ key: getattr(self.object, key) for key in context['fields']})]
         return context
 
 def TestView(request):

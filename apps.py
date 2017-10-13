@@ -38,7 +38,8 @@ class AuthentaConfig(AppConfig):
     vsignout = True
     vprofile = True
     vprofilelist = True
-    vabsolute = 'authenta:Profile'
+    vuser_absolute = 'authenta:Profile'
+    vtask_absolute = 'authenta:TaskDetail'
     vextension = '.html'
 
     contenttype_html = 'text/html'
@@ -95,6 +96,7 @@ class AuthentaConfig(AppConfig):
     def ready(self):
         from . import check
         from . import signals
+        self.contenttype_txt = '{}; charset={}'.format(AuthentaConfig.contenttype_txt, AuthentaConfig.charset)
 
         from django.views.decorators.cache import never_cache
         from django.contrib import admin

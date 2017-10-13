@@ -137,7 +137,7 @@ class User(AbstractUser):
         self.email = self.__class__.objects.normalize_email(self.email)
 
     def get_absolute_url(self):
-        return reverse(AuthentaConfig.vabsolute, args=[str(self.id), AuthentaConfig.vextension])
+        return reverse(AuthentaConfig.vuser_absolute, args=[str(self.id), AuthentaConfig.vextension])
 
     def sendMail(self, subject, tpl_html, tpl_txt):
         htmly     = get_template(tpl_html)
@@ -150,6 +150,8 @@ class User(AbstractUser):
         msg.attach_alternative(html_content, AuthentaConfig.contenttype_html)
         msg.send()
 
+from datetime import datetime, timedelta
+import json, subprocess, sys, urllib.parse
 class Task(models.Model):
     task = models.CharField(_('Task'), max_length=254, choices=AuthentaConfig.tasks, editable=False)
     info = models.TextField(_('Information about the task'), blank=True, default=_('Ordered'), editable=False, null=True)
@@ -165,3 +167,23 @@ class Task(models.Model):
 
     def __str__(self):
         return self.get_task_display()
+
+    def get_absolute_url(self):
+        return reverse(AuthentaConfig.vtask_absolute, args=[str(self.id), AuthentaConfig.vextension])
+        
+    def failed(self, error):
+        logmethis(5, 'error=%s' % str(error))
+        self.error = str(error)
+        self.save()
+        return False
+
+    def success(self):
+        self.error = None
+        self.save()
+        return True
+
+    def getScript(self):
+        try:
+            self.script = AuthentaConfig.tasks[int(task)][0]
+        except NameError as error:
+            self.failed(error)
