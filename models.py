@@ -107,7 +107,7 @@ class Method(models.Model):
 
     def save(self, *args, **kwargs):
         super(Method, self).save(*args, **kwargs)
-        self.generateCache()
+        #self.generateCache()
 
 class User(AbstractUser):
     username = models.CharField(_('Username'), blank=AuthentaConfig.usernamenull, max_length=254, null=AuthentaConfig.usernamenull, unique=AuthentaConfig.usernameuniq, validators=[AbstractUser.username_validator],)

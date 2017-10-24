@@ -117,7 +117,9 @@ class MethodList(HybridResponseMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super(MethodList, self).get_context_data(**kwargs)
-        context['fields'] = ['id', 'name']
+        context['fields'] = ['id', 'method', 'name', 'is_active', 'is_staff', 'is_superuser', 'groups', 'permissions']
+        context['groups'] = ['id', 'name']
+        context['permissions'] = ['id', '__str__']
         return context
 
 @method_decorator(localcalloradminorstaff, name='dispatch')
