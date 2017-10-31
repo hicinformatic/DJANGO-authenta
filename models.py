@@ -154,7 +154,7 @@ from datetime import datetime, timedelta
 import json, subprocess, sys, urllib.parse
 class Task(models.Model):
     task = models.CharField(_('Task'), max_length=254, choices=AuthentaConfig.tasks, editable=False)
-    info = models.TextField(_('Information about the task'), blank=True, default=_('Ordered'), editable=False, null=True)
+    info = models.TextField(_('Information about the task'), blank=True, editable=False, null=True)
     status = models.CharField(_('Status'), max_length=7, choices=AuthentaConfig.status, default='order', editable=False)
     error = models.TextField(_('Error encountered'), blank=True, editable=False, null=True)
     updateby = models.CharField(_('Last update by'), blank=True, editable=False, max_length=254, null=True)

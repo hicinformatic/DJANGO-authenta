@@ -96,5 +96,5 @@ class MethodAdmin(admin.ModelAdmin):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ( 'task', 'info', 'status', 'dateupdate', )
+    list_display = ( '__str__', 'info', 'status', 'dateupdate', )
     readonly_fields = ( 'task', 'info', 'status', 'error', 'updateby', 'datecreate', 'dateupdate', )

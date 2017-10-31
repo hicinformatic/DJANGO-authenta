@@ -53,7 +53,11 @@ class AuthentaConfig(AppConfig):
     template_generatecache = 'authenta/admin/generate_cache.html'
 
     template_txt = '{}:{}'
-    separator_txt = '|'
+    separator_txt = ' // '
+    manytemplate_txt = '{}:[ {} ]'
+    manyseparator_txt = ' && '
+    subtemplate_txt = '{}={}'
+    subseparator_txt = ';;'
 
     cache_methods = 'methods.json'
 
@@ -79,11 +83,11 @@ class AuthentaConfig(AppConfig):
     status = (('error', _('In error')), ('order', _('Ordered')), ('start', _('Started')), ('running', _('Running')), ('complete', _('Complete')), )
     tasks = (
         ('check_os',        _('check(OS)')),
-        ('generate_cache',  _('Generate cache')),
+        ('cache_methods',  _('Generate cache')),
     )
     subtasks = {}
     deltas = {
-        'generate_cache': 3600,
+        'cache_methods': 3600,
     }
 
     ldap_activated = True
@@ -92,6 +96,9 @@ class AuthentaConfig(AppConfig):
     dir_ldapcerts = os.path.dirname(os.path.realpath(__file__))+'/ldapcerts'
 
     facebook_activated = False
+
+    def getRegTask():
+        return '|'.join([v[0] for v in AuthentaConfig.tasks])
 
     def ready(self):
         from . import check

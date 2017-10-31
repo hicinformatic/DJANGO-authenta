@@ -1,3 +1,4 @@
+from django.views import View
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 from django.views.generic import DetailView, TemplateView
@@ -42,6 +43,26 @@ class GenerateCache(HybridResponseMixin, TemplateView):
             json_serializer = serializers.get_serializer('json')()
             json_serializer.serialize(methods, stream=outfile, indent=4)
         return context
+
+
+class TaskCreate(HybridResponseMixin, CreateView):
+    model = Task
+#class TaskCreate(HybridResponseMixin, View):
+#    def get(self, request, *args, **kwargs):
+#        extension = '.{}'.format(self.kwargs['extension']) if self.kwargs['extension'] is not None else '.html'
+#        info = self.kwargs['info'] if self.kwargs['info'] is not None else None
+#        task = Task(task=self.kwargs['tasktype'], info=info)
+#        task.save()
+#        return redirect(reverse('authenta:TaskDetail', args=[str(task.pk), extension]))
+#
+#class TaskUpdate(HybridResponseMixin, View):
+#    def get(self, request, *args, **kwargs):
+#        extension = '.{}'.format(self.kwargs['extension']) if self.kwargs['extension'] is not None else '.html'
+#        info = self.kwargs['info'] if self.kwargs['info'] is not None else None
+#        error = self.kwargs['error'] if self.kwargs['error'] is not None else None
+#        task = Task(task=self.kwargs['tasktype'], info=info, error=error)
+#        task.save()
+#        return redirect(reverse('authenta:TaskDetail', args=[str(task.pk), extension]))
 
 if AuthentaConfig.vsignup:
     class SignUp(HybridFormResponseMixin, CreateView):
@@ -96,7 +117,7 @@ if AuthentaConfig.vprofile:
         def get_context_data(self, **kwargs):
             context = super(Profile, self).get_context_data(**kwargs)
             context['fields'] = ['username', ]
-            context['object_list'] = [objectDict({ 'username': self.object.username, })]
+            context['object_list'] = [self.object]
             return context
 
 if AuthentaConfig.vsignout:
@@ -130,7 +151,7 @@ class TaskDetail(HybridResponseMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super(TaskDetail, self).get_context_data(**kwargs)
         context['fields'] = ['task', 'info', 'status', 'error']
-        context['object_list'] = [objectDict({ key: getattr(self.object, key) for key in context['fields']})]
+        context['object_list'] = [self.object]
         return context
 
 def TestView(request):

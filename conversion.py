@@ -41,23 +41,31 @@ class HybridResponseMixin:
         if self.kwargs['extension'] == 'json':
             return JsonResponse(jsonFields(context), safe=False)
         elif self.kwargs['extension'] == 'txt':
-            data = '\n'.join([AuthentaConfig.separator_txt.join([AuthentaConfig.template_txt.format(f, getattr(obj, f)) for f in context['fields']]) for obj in context['object_list']])
-            return HttpResponse(data, content_type=AuthentaConfig.contenttype_txt)
+            return HttpResponse(textFields(context), content_type=AuthentaConfig.contenttype_txt)
         else:
             return response
 
 def jsonFields(context):
-    listJson = []
-    for obj in context['object_list']:
-        formatted = {}
-        for f in context['fields']:
-            formatted[f] = jsonRelated(context, obj, f) if obj._meta.get_field(f).get_internal_type() == 'ManyToManyField' else getattr(obj, f)
-        listJson.append(formatted)
-    return listJson
+    return [{
+        f: jsonRelated(context, obj, f) 
+            if obj._meta.get_field(f).get_internal_type() == 'ManyToManyField' else getattr(obj, f) for f in context['fields'] 
+        } for obj in context['object_list']]
 
 def jsonRelated(context, obj, field):
-    formatted = False
     relations = getattr(obj, field).all()
-    if relations:
-        formatted = [{ u:getattr(rel, u)() if callable(getattr(rel, u)) else getattr(rel, u) for u in context[field] } for rel in relations]
-    return formatted
+    return [{ u:getattr(rel, u)() if callable(getattr(rel, u)) else getattr(rel, u) for u in context[field] } for rel in relations] if relations else False
+
+def textFields(context):
+    return '\n'.join([
+        AuthentaConfig.separator_txt.join([
+            AuthentaConfig.manytemplate_txt.format(f, textRelated(context, obj, f)) 
+            if obj._meta.get_field(f).get_internal_type() == 'ManyToManyField' else AuthentaConfig.template_txt.format(f, getattr(obj, f)) for f in context['fields'] 
+        ]) for obj in context['object_list'] ])
+
+def textRelated(context, obj, field):
+    relations = getattr(obj, field).all()
+    return AuthentaConfig.manyseparator_txt.join([ 
+        AuthentaConfig.subseparator_txt.join([
+            AuthentaConfig.subtemplate_txt.format(u, str(getattr(rel, u)())) 
+            if callable(getattr(rel, u)) else AuthentaConfig.subtemplate_txt.format(u, str(getattr(rel, u))) for u in context[field] 
+        ]) for rel in relations ] ) if relations else False
