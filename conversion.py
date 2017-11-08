@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
-
+from django.middleware.csrf import get_token
 from .apps import AuthentaConfig
 
 class HybridFormResponseMixin:
@@ -28,7 +28,9 @@ class HybridFormResponseMixin:
     def render_to_response(self, context):
         response = super(HybridFormResponseMixin, self).render_to_response(context)
         if self.kwargs['extension'] == 'json':
-            return JsonResponse({field.html_name: field.help_text for field in context['form']})
+            data = {field.html_name: field.help_text for field in context['form']}
+            if self.token: data['csrftoken'] = get_token(self.request)
+            return JsonResponse(data)
         elif self.kwargs['extension'] == 'txt':
             data = '\n'.join([AuthentaConfig.template_txt.format(field.html_name, field.help_text) for field in context['form']])
             return HttpResponse(data, content_type=AuthentaConfig.contenttype_txt)

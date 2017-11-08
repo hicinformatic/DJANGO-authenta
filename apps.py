@@ -17,15 +17,17 @@ class AuthentaConfig(AppConfig):
     locallog = True
     syslog = False
 
-    python = '/bin/python3.6'
     binary = '/bin/bash'
-    backstart =  '/bin/nohup'
-    backend = '&'
-    backext = '.sh'
+    binary_ext = '.sh'
+    python = '/bin/python3.6'
+    python_ext = '.py'
+    python_start =  '/bin/nohup'
+    python_end = '&'
     killscript = 3600
     host = ['localhost', 'localhost:8000']
     ip = ['127.0.0.1',]
     port = 8000
+    localcallname = _('local_robot')
 
     vn_method = _('authentication method')
     vpn_method = _('authentication methods')
@@ -47,6 +49,11 @@ class AuthentaConfig(AppConfig):
     contenttype_txt = 'text/plain'
     contenttype_svg = 'image/svg+xml'
     contenttype_js = 'application/javascript'
+
+    viewregister_accepted = ['signup', 'register']
+    viewlogin_accepted = ['signin', 'login']
+    viewlogout_accepted = ['signout', 'logout']
+    extensions_accepted = ['html', 'json', 'txt']
 
     template_login = 'authenta/admin/login.html'
     template_changelist = 'authenta/admin/change_list_method.html'
@@ -80,7 +87,7 @@ class AuthentaConfig(AppConfig):
     additional_methods = []
     admin_override = False
 
-    status = (('error', _('In error')), ('order', _('Ordered')), ('start', _('Started')), ('running', _('Running')), ('complete', _('Complete')), )
+    status = (('error', _('In error')), ('order', _('Ordered')), ('ready', _('Ready')), ('start', _('Started')), ('running', _('Running')), ('complete', _('Complete')), )
     tasks = (
         ('check_os',        _('check(OS)')),
         ('cache_methods',  _('Generate cache')),
@@ -97,8 +104,14 @@ class AuthentaConfig(AppConfig):
 
     facebook_activated = False
 
+    def get_regexarray(attribute):
+        return '|'.join([r for r in getattr(AuthentaConfig, attribute)])
+
     def getRegTask():
         return '|'.join([v[0] for v in AuthentaConfig.tasks])
+
+    def getRegExt():
+        return '|'.join([e for e in AuthentaConfig.extensions_accepted])
 
     def ready(self):
         from . import check

@@ -1,12 +1,13 @@
 from library import Task
-import sys
+import sys, os
 
-taskid = 1
 port = sys.argv[1]
+taskid = sys.argv[2]
 
-task = Task('generate_cache')
-task.taskme(port, 'start', taskid, 'startca')
-task.taskme(port, 'running', taskid, 'run ca')
-task.taskme(port, 'complete', taskid, 'complete ca')
+scriptname = os.path.basename(__file__)[:-3]
 
-task.deletePidFile()
+task = Task(port, taskid, scriptname)
+task.update('start', 'ca demarre')
+task.update('running', 'ca demarre')
+task.update('complete', 'ca demarre')
+

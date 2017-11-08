@@ -1,5 +1,5 @@
 from django.views import View
-from django.views.generic.edit import CreateView
+from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
 from django.views.generic import DetailView, TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
@@ -23,14 +23,6 @@ class objectDict(object):
     def __init__(self, d):
         self.__dict__ = d
 
-#@localcalloradminorstaff
-#def Task(request, command, task, extension, message=''):
-#    if command == 'order': return order(extension, task, message)
-#    if command == 'start': return start(extension, task, message)
-#    if command == 'running': return running(extension, task, message)
-#    if command == 'complete': return complete(extension, task, message)
-#    if command == 'error': return error(extension, task, message)
-
 class GenerateCache(HybridResponseMixin, TemplateView):
     template_name = 'authenta/method/method.html'
 
@@ -44,25 +36,30 @@ class GenerateCache(HybridResponseMixin, TemplateView):
             json_serializer.serialize(methods, stream=outfile, indent=4)
         return context
 
-
-class TaskCreate(HybridResponseMixin, CreateView):
+#@method_decorator(localcalloradminorstaff, name='dispatch')
+from django.views.decorators.csrf import csrf_exempt
+@method_decorator(csrf_exempt, name='dispatch')
+class TaskCreate(HybridFormResponseMixin, CreateView):
     model = Task
-#class TaskCreate(HybridResponseMixin, View):
-#    def get(self, request, *args, **kwargs):
-#        extension = '.{}'.format(self.kwargs['extension']) if self.kwargs['extension'] is not None else '.html'
-#        info = self.kwargs['info'] if self.kwargs['info'] is not None else None
-#        task = Task(task=self.kwargs['tasktype'], info=info)
-#        task.save()
-#        return redirect(reverse('authenta:TaskDetail', args=[str(task.pk), extension]))
-#
-#class TaskUpdate(HybridResponseMixin, View):
-#    def get(self, request, *args, **kwargs):
-#        extension = '.{}'.format(self.kwargs['extension']) if self.kwargs['extension'] is not None else '.html'
-#        info = self.kwargs['info'] if self.kwargs['info'] is not None else None
-#        error = self.kwargs['error'] if self.kwargs['error'] is not None else None
-#        task = Task(task=self.kwargs['tasktype'], info=info, error=error)
-#        task.save()
-#        return redirect(reverse('authenta:TaskDetail', args=[str(task.pk), extension]))
+    fields = ['task', 'info']
+    template_name = 'authenta/form.html'
+    token = True
+
+    def form_valid(self, form):
+        self.object.updateby = getattr(self.request.user, AuthentaConfig.uniqidentity)
+        return super(TaskUpdate, self).form_valid(form)
+
+@method_decorator(localcalloradminorstaff, name='dispatch')
+#@method_decorator(csrf_exempt, name='dispatch')
+class TaskUpdate(HybridFormResponseMixin, UpdateView):
+    model = Task
+    fields = ['task', 'status', 'info', 'error']
+    template_name = 'authenta/form.html'
+    token = True
+
+    def form_valid(self, form):
+        self.object.updateby = getattr(self.request.user, AuthentaConfig.uniqidentity)
+        return super(TaskUpdate, self).form_valid(form)
 
 if AuthentaConfig.vsignup:
     class SignUp(HybridFormResponseMixin, CreateView):

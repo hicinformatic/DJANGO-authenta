@@ -153,10 +153,10 @@ class User(AbstractUser):
 from datetime import datetime, timedelta
 import json, subprocess, sys, urllib.parse
 class Task(models.Model):
-    task = models.CharField(_('Task'), max_length=254, choices=AuthentaConfig.tasks, editable=False)
-    info = models.TextField(_('Information about the task'), blank=True, editable=False, null=True)
-    status = models.CharField(_('Status'), max_length=7, choices=AuthentaConfig.status, default='order', editable=False)
-    error = models.TextField(_('Error encountered'), blank=True, editable=False, null=True)
+    task = models.CharField(_('Task'), max_length=254, choices=AuthentaConfig.tasks, help_text=_('Task to be done'))
+    info = models.TextField(_('Information about the task'), blank=True, null=True, help_text=_('More informations'))
+    status = models.CharField(_('Status'), max_length=8, choices=AuthentaConfig.status, default='order', help_text=_('Can be: {}'.format(', '.join([s[0] for s in AuthentaConfig.status]))))
+    error = models.TextField(_('Error encountered'), blank=True, null=True, help_text=_('Error returned'))
     updateby = models.CharField(_('Last update by'), blank=True, editable=False, max_length=254, null=True)
     datecreate = models.DateTimeField(_('Creation date'), auto_now_add=True, editable=False)
     dateupdate = models.DateTimeField(_('Last modification date'), auto_now=True, editable=False)
@@ -168,9 +168,13 @@ class Task(models.Model):
     def __str__(self):
         return self.get_task_display()
 
+    @models.permalink
     def get_absolute_url(self):
-        return reverse(AuthentaConfig.vtask_absolute, args=[str(self.id), AuthentaConfig.vextension])
-        
+        return AuthentaConfig.vtask_absolute, (), {'pk': self.id, 'extension': AuthentaConfig.vextension}
+
+    #def get_absolute_url(self):
+    #    return reverse(AuthentaConfig.vtask_absolute, args=[str(self.id), AuthentaConfig.vextension])
+
     def failed(self, error):
         logmethis(5, 'error=%s' % str(error))
         self.error = str(error)
@@ -182,8 +186,45 @@ class Task(models.Model):
         self.save()
         return True
 
-    def getScript(self):
-        try:
-            self.script = AuthentaConfig.tasks[int(task)][0]
-        except NameError as error:
-            self.failed(error)
+    def save(self, *args, **kwargs):
+        return super(Task, self).save(*args, **kwargs)
+        self.start_task()
+
+    def update_by(self, request):
+        self.updateby = request.user.username
+
+    def check_task(self):
+        if self.status == 'order':
+            check = '{0} {1}/{2}{3} {4} {5}'.format(
+                AuthentaConfig.binary,
+                AuthentaConfig.dir_task,
+                AuthentaConfig.tasks[0][0], 
+                AuthentaConfig.binary_ext,
+                self.task,
+                AuthentaConfig.killscript)
+            try: 
+                subprocess.check_call(check, shell=True)
+                self.status = 'ready'
+                return True
+            except subprocess.CalledProcessError as error:
+                self.error = error
+        else:
+            self.error = _('Not ordered, check status')
+        return False
+
+
+    def start_task(self):
+        if self.check_task():
+            bgtask = '{0} {1} {2}/{3}{4}{5} {6}'.format(
+                AuthentaConfig.python_start,
+                AuthentaConfig.python,
+                AuthentaConfig.dir_task,
+                self.task,
+                AuthentaConfig.python_ext,
+                self.id,
+                AuthentaConfig.python_end)
+            try:
+                subprocess.check_call(bgtask, shell=True)
+            except subprocess.CalledProcessError as Error:
+                self.error = error
+            return False

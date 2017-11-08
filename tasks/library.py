@@ -1,12 +1,16 @@
-import urllib.request, urllib.parse, os
+import urllib.request, urllib.parse, os, http.cookiejar, json
 
 class Task:
-    def __init__(self, name):
-        self.name = name
-        self.scriptdir = os.path.dirname(os.path.realpath(__file__))
-        self.pid = '{}/{}.pid'.format(self.scriptdir, self.name)
-        self.writePidFile()
+    get = 'authenta/task/update'
+    extend = 'json'
 
+    def __init__(self, port, task, scriptname):
+        self.port = port
+        self.task = task
+        self.scriptname = scriptname
+        self.scriptdir = os.path.dirname(os.path.realpath(__file__))
+        self.pid = '{}/{}.pid'.format(self.scriptdir, scriptname)
+        self.writePidFile()
 
     def writePidFile(self):
         pid = str(os.getpid())
@@ -14,17 +18,26 @@ class Task:
         f.write(pid)
         f.close()
 
-    def deletePidFile(self):
+    def __del__(self):
         os.unlink(self.pid)
 
-    def error(self, port, task, message=''):
-        if message is None or message == '': c = urllib.request.urlopen("http://localhost:{}/authenta/{}/{}.json/{}".format(port, 'error', taskl))
-        else: c = urllib.request.urlopen("http://localhost:{}/authenta/{}/{}.json/{}".format(port, 'error', task, urllib.parse.quote_plus(message)))
-        return c.getcode()
+    def update(self, status, info=''):
+        data = {'task': self.scriptname, 'status': status, 'info': '', 'error': '' }
+        if status == 'error' and (info is not None or info != ''):
+            data['error'] = info
+        elif info is not None or info != '':
+            data['info'] = info
+        url = "http://localhost:{}/{}/{}.json".format(self.port, self.get, self.task)
 
-    def taskme(self, port, command, task, message=''):
-        if message is None or message == '': c = urllib.request.urlopen("http://localhost:{}/authenta/{}/{}.json".format(port, command, task))
-        else: c = urllib.request.urlopen("http://localhost:{}/authenta/{}/{}.json/{}".format(port, command, task, urllib.parse.quote_plus(message)))
-        code = c.getcode()
-        if code != 200: error(port, task)
-        return code
+        cj = http.cookiejar.CookieJar()
+        base = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+
+        init = urllib.request.Request(url)
+        init = base.open(init)
+        init = json.loads(init.read().decode('utf-8'))
+
+        data['csrfmiddlewaretoken'] = init['csrftoken']
+        data = urllib.parse.urlencode(data).encode()
+        curl = urllib.request.Request(url, data=data)
+        curl = base.open(curl)
+        return curl.getcode()
