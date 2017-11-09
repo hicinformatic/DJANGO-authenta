@@ -1,65 +1,23 @@
-from django.views import View
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
-from django.views.generic import DetailView, TemplateView
+from django.views.generic import DetailView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.utils.decorators import method_decorator
 
 from django.urls import reverse
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.http import Http404  
 
 from .apps import AuthentaConfig
 from .conversion import HybridFormResponseMixin, HybridResponseMixin
 from .models import User, Method, Task
 from .forms import SignUpForm
+from .decorators import localcalloradminorstaff
 
-from .decorators import localcall, localcalloradmin, localcalloradminorstaff, localcalloradminorstafforlogin
-from .functions import order, start, running, complete, error, subtask
-
-from django.core import serializers
 
 class objectDict(object):
     def __init__(self, d):
         self.__dict__ = d
-
-class GenerateCache(HybridResponseMixin, TemplateView):
-    template_name = 'authenta/method/method.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(GenerateCache, self).get_context_data(**kwargs)
-        methods = Method.objects.filter(status=True)
-        context['object'] = {m.name : m.method for m in methods}
-        file_json = '{}/{}'.format(AuthentaConfig.dir_json, AuthentaConfig.cache_methods)
-        with open(file_json, 'w') as outfile:
-            json_serializer = serializers.get_serializer('json')()
-            json_serializer.serialize(methods, stream=outfile, indent=4)
-        return context
-
-#@method_decorator(localcalloradminorstaff, name='dispatch')
-from django.views.decorators.csrf import csrf_exempt
-@method_decorator(csrf_exempt, name='dispatch')
-class TaskCreate(HybridFormResponseMixin, CreateView):
-    model = Task
-    fields = ['task', 'info']
-    template_name = 'authenta/form.html'
-    token = True
-
-    def form_valid(self, form):
-        self.object.updateby = getattr(self.request.user, AuthentaConfig.uniqidentity)
-        return super(TaskUpdate, self).form_valid(form)
-
-@method_decorator(localcalloradminorstaff, name='dispatch')
-#@method_decorator(csrf_exempt, name='dispatch')
-class TaskUpdate(HybridFormResponseMixin, UpdateView):
-    model = Task
-    fields = ['task', 'status', 'info', 'error']
-    template_name = 'authenta/form.html'
-    token = True
-
-    def form_valid(self, form):
-        self.object.updateby = getattr(self.request.user, AuthentaConfig.uniqidentity)
-        return super(TaskUpdate, self).form_valid(form)
 
 if AuthentaConfig.vsignup:
     class SignUp(HybridFormResponseMixin, CreateView):
@@ -139,6 +97,32 @@ class MethodList(HybridResponseMixin, ListView):
         context['groups'] = ['id', 'name']
         context['permissions'] = ['id', '__str__']
         return context
+
+@method_decorator(localcalloradminorstaff, name='dispatch')
+class TaskCreate(HybridFormResponseMixin, CreateView):
+    model = Task
+    fields = ['task', 'info']
+    template_name = 'authenta/form.html'
+    token = True
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        form.instance.updateby = getattr(self.request.user, AuthentaConfig.uniqidentity)
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+@method_decorator(localcalloradminorstaff, name='dispatch')
+class TaskUpdate(HybridFormResponseMixin, UpdateView):
+    model = Task
+    fields = ['task', 'status', 'info', 'error']
+    template_name = 'authenta/form.html'
+    token = True
+
+    def form_valid(self, form):
+        self.object.updateby = getattr(self.request.user, AuthentaConfig.uniqidentity)
+        return super(TaskUpdate, self).form_valid(form)
 
 @method_decorator(localcalloradminorstaff, name='dispatch')
 class TaskDetail(HybridResponseMixin, DetailView):

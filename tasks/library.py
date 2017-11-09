@@ -1,11 +1,19 @@
-import urllib.request, urllib.parse, os, http.cookiejar, json
+import urllib.request, urllib.parse, os, http.cookiejar, json, sys
+
+appdir = os.path.abspath(os.path.join(__file__ ,"../.."))
+projectdir = os.path.abspath(os.path.join(__file__ ,"../../.."))
+sys.path.append(projectdir)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "testdjango.settings")
+sys.path.append(appdir)
+from apps import OverConfig
 
 class Task:
     get = 'authenta/task/update'
     extend = 'json'
+    domain = 'localhost'
 
-    def __init__(self, port, task, scriptname):
-        self.port = port
+    def __init__(self, task, scriptname):
+        self.port = OverConfig.port
         self.task = task
         self.scriptname = scriptname
         self.scriptdir = os.path.dirname(os.path.realpath(__file__))
@@ -27,7 +35,7 @@ class Task:
             data['error'] = info
         elif info is not None or info != '':
             data['info'] = info
-        url = "http://localhost:{}/{}/{}.json".format(self.port, self.get, self.task)
+        url = 'http://{}:{}/{}/{}.json'.format(self.domain, self.port, self.get, self.task)
 
         cj = http.cookiejar.CookieJar()
         base = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
@@ -41,3 +49,9 @@ class Task:
         curl = urllib.request.Request(url, data=data)
         curl = base.open(curl)
         return curl.getcode()
+
+    def getUrl(self, url):
+        return 'http://{}:{}/{}'.format(self.domain, self.port, url)
+
+    def getConfig(self, conf):
+        return getattr(OverConfig, conf)

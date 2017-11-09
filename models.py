@@ -195,7 +195,7 @@ class Task(models.Model):
 
     def check_task(self):
         if self.status == 'order':
-            check = '{0} {1}/{2}{3} {4} {5}'.format(
+            check = '{0} {1}/{2}{3} {5}'.format(
                 AuthentaConfig.binary,
                 AuthentaConfig.dir_task,
                 AuthentaConfig.tasks[0][0], 

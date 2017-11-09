@@ -4,8 +4,7 @@ from django.conf import settings
 
 import datetime, syslog, os
 
-class AuthentaConfig(AppConfig):
-    name = 'authenta'
+class OverConfig(object):
     site_header = _('Django administration')
     index_title = _('Site administration (assisted by Authenta)')
     verbose_name = _('Authentication and Authorization')
@@ -176,6 +175,9 @@ class AuthentaConfig(AppConfig):
         mysite = AuthentaAdminSite()
         admin.site = mysite
         sites.site = mysite
+
+class AuthentaConfig(AppConfig, OverConfig):
+    name = 'authenta'
 
 if hasattr(settings, 'AUTHENTA_SETTINGS'):
     for k,v in settings.AUTHENTA_SETTINGS.items():
