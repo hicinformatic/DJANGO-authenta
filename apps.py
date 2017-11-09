@@ -40,6 +40,8 @@ class OverConfig(object):
     vuser_absolute = 'authenta:Profile'
     vtask_absolute = 'authenta:TaskDetail'
     vextension = '.html'
+    ext_html = 'html'
+    ext_encrypted = 'enc'
 
     contenttype_html = 'text/html'
     contenttype_csv = 'text/csv'
@@ -121,17 +123,17 @@ class OverConfig(object):
             ''.join(os.listdir('..')),
         ]).encode('ascii')).hexdigest()
 
-    def encryptFile(filename, plaintext):
+    def encryptCache(filename, plaintext):
         key = OverConfig.encryptionKey()
         plaintext = plaintext + b"\0" * (AES.block_size - len(plaintext) % AES.block_size)
         iv = Random.new().read(AES.block_size)
         cipher = AES.new(key, AES.MODE_CBC, iv)
         plaintext = iv + cipher.encrypt(plaintext)
-        with open('{}/{}.enc'.format(OverConfig.dir_cache, filename), 'wb') as fo:
+        with open('{}/{}{}'.format(OverConfig.dir_cache, filename, OverConfig.ext_encrypted), 'wb') as fo:
             fo.write(plaintext)
 
-    def decryptFile(filename):
-        with open('{}/{}.enc'.format(OverConfig.dir_cache, filename), 'rb') as fo:
+    def decryptCache(filename):
+        with open('{}/{}{}'.format(OverConfig.dir_cache, filename, OverConfig.ext_encrypted), 'rb') as fo:
             ciphertext = fo.read()
             key = OverConfig.encryptionKey()
             iv = ciphertext[:AES.block_size]

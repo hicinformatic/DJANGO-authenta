@@ -56,8 +56,8 @@ class Task:
     def getConfig(self, conf, function=False):
         return getattr(OverConfig, conf)() if function else getattr(OverConfig, conf)
 
-    def encryptFile(self, filename, plaintext):
-        OverConfig.encryptFile(filename, plaintext)
+    def encryptCache(self, filename, plaintext):
+        OverConfig.encryptCache(filename, plaintext)
 
-    def decryptFile(self, filename):
-        return OverConfig.decryptFile(filename)
+    def decryptCache(self, filename):
+        return OverConfig.encryptCache(filename)
