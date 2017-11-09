@@ -213,7 +213,6 @@ class Task(models.Model):
             self.error = _('Not ordered, check status')
         return False
 
-
     def start_task(self):
         if self.check_task():
             bgtask = '{0} {1} {2}/{3}{4} {5} {6}'.format(
