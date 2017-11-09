@@ -112,6 +112,8 @@ class OverConfig(object):
     def getRegExt():
         return '|'.join([e for e in AuthentaConfig.extensions_accepted])
 
+class AuthentaConfig(AppConfig, OverConfig):
+    name = 'authenta'
     def ready(self):
         from . import check
         from . import signals
@@ -175,9 +177,6 @@ class OverConfig(object):
         mysite = AuthentaAdminSite()
         admin.site = mysite
         sites.site = mysite
-
-class AuthentaConfig(AppConfig, OverConfig):
-    name = 'authenta'
 
 if hasattr(settings, 'AUTHENTA_SETTINGS'):
     for k,v in settings.AUTHENTA_SETTINGS.items():

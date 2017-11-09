@@ -187,8 +187,9 @@ class Task(models.Model):
         return True
 
     def save(self, *args, **kwargs):
-        return super(Task, self).save(*args, **kwargs)
+        response = super(Task, self).save(*args, **kwargs)
         self.start_task()
+        return response
 
     def update_by(self, request):
         self.updateby = request.user.username
@@ -215,7 +216,7 @@ class Task(models.Model):
 
     def start_task(self):
         if self.check_task():
-            bgtask = '{0} {1} {2}/{3}{4}{5} {6}'.format(
+            bgtask = '{0} {1} {2}/{3}{4} {5} {6}'.format(
                 AuthentaConfig.python_start,
                 AuthentaConfig.python,
                 AuthentaConfig.dir_task,
@@ -223,6 +224,7 @@ class Task(models.Model):
                 AuthentaConfig.python_ext,
                 self.id,
                 AuthentaConfig.python_end)
+            logmethis(1, bgtask)
             try:
                 subprocess.check_call(bgtask, shell=True)
             except subprocess.CalledProcessError as Error:
