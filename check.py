@@ -38,9 +38,9 @@ logmethis(7, 'is_staff_default: %s' % str(AuthentaConfig.isstaffdefault))
 logmethis(7, 'choices_method: %s' % '; '.join(str(i[1]) for i in AuthentaConfig.choices_method))
 logmethis(7, 'additional_methods: %s' % '; '.join(str(i[1]) for i in AuthentaConfig.additional_methods))
 
-if not os.path.exists(AuthentaConfig.dir_json):
-    os.makedirs(AuthentaConfig.dir_json)
-logmethis(7, 'jsons_directory: %s' % str(AuthentaConfig.dir_json))
+if not os.path.exists(AuthentaConfig.dir_cache):
+    os.makedirs(AuthentaConfig.dir_cache)
+logmethis(7, 'jsons_directory: %s' % str(AuthentaConfig.dir_cache))
 
 if AuthentaConfig.ldap_activated: 
     if not os.path.exists(AuthentaConfig.dir_ldapcerts):

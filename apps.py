@@ -2,16 +2,14 @@ from django.apps import AppConfig
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 
-import datetime, syslog, os
+from Crypto.Cipher import AES
+from Crypto import Random
+import datetime, syslog, os, hashlib
 
 class OverConfig(object):
-    site_header = _('Django administration')
-    index_title = _('Site administration (assisted by Authenta)')
-    verbose_name = _('Authentication and Authorization')
-
     dir_logs = os.path.dirname(os.path.realpath(__file__))+'/logs'
     dir_task = os.path.dirname(os.path.realpath(__file__))+'/tasks'
-    dir_json = os.path.dirname(os.path.realpath(__file__))+'/jsons'
+    dir_cache = os.path.dirname(os.path.realpath(__file__))+'/caches'
     loglvl = 7
     locallog = True
     syslog = False
@@ -95,7 +93,6 @@ class OverConfig(object):
     deltas = {
         'cache_methods': 3600,
     }
-
     ldap_activated = True
     choices_ldapscope = (('SCOPE_BASE', 'base (scope=base)'), ('SCOPE_ONELEVEL', 'onelevel (scope=onelevel)'), ('SCOPE_SUBTREE', 'subtree (scope=subtree)'))
     choices_ldapversion = (('VERSION2', 'Version 2 (LDAPv2)'), ('VERSION3', 'Version 3 (LDAPv3)'))
@@ -112,17 +109,53 @@ class OverConfig(object):
     def getRegExt():
         return '|'.join([e for e in AuthentaConfig.extensions_accepted])
 
+    def encryptionKey():
+        operatsys = os.uname()
+        return hashlib.md5(
+        '|'.join([
+            operatsys.sysname,
+            operatsys.nodename ,
+            operatsys.release,
+            operatsys.version,
+            operatsys.machine,
+            ''.join(os.listdir('..')),
+        ]).encode('ascii')).hexdigest()
+
+    def encryptFile(filename, plaintext):
+        key = OverConfig.encryptionKey()
+        plaintext = plaintext + b"\0" * (AES.block_size - len(plaintext) % AES.block_size)
+        iv = Random.new().read(AES.block_size)
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        plaintext = iv + cipher.encrypt(plaintext)
+        with open('{}/{}.enc'.format(OverConfig.dir_cache, filename), 'wb') as fo:
+            fo.write(plaintext)
+
+    def decryptFile(filename):
+        with open('{}/{}.enc'.format(OverConfig.dir_cache, filename), 'rb') as fo:
+            ciphertext = fo.read()
+            key = OverConfig.encryptionKey()
+            iv = ciphertext[:AES.block_size]
+            cipher = AES.new(key, AES.MODE_CBC, iv)
+            plaintext = cipher.decrypt(ciphertext[AES.block_size:])
+            return plaintext.rstrip(b"\0")
+
 class AuthentaConfig(AppConfig, OverConfig):
     name = 'authenta'
+    site_header = _('Django administration')
+    index_title = _('Site administration (assisted by Authenta)')
+    verbose_name = _('Authentication and Authorization')
+
     def ready(self):
         from . import check
         from . import signals
-        self.contenttype_txt = '{}; charset={}'.format(AuthentaConfig.contenttype_txt, AuthentaConfig.charset)
-
         from django.views.decorators.cache import never_cache
         from django.contrib import admin
         from django.contrib.admin import sites
         from django.urls import reverse
+        from django.conf.urls import url
+        
+        self.contenttype_txt = '{}; charset={}'.format(AuthentaConfig.contenttype_txt, AuthentaConfig.charset)
+
         class AuthentaAdminSite(admin.AdminSite):
             login_template = AuthentaConfig.template_login
             site_header = AuthentaConfig.site_header
@@ -160,17 +193,8 @@ class AuthentaConfig(AppConfig, OverConfig):
                 from django.contrib.auth.views import LoginView
                 return LoginView.as_view(**defaults)(request)
 
-            def generateCache(self, request):
-                from django.shortcuts import render
-                from .models import Method
-                context = dict( opts=Method._meta, title='Cache', has_permission=True)
-                Method.generateCache()
-                return render(request, AuthentaConfig.template_generatecache, context)
-
             def get_urls(self):
                 urlpatterns = super(AuthentaAdminSite, self).get_urls()
-                from django.conf.urls import url
-                urlpatterns.append(url(r'^generatecache/$', self.generateCache, name='generateCache'))
                 urlpatterns.append(url(r'^login/ldap/$', self.login, name='ldap_login'))
                 return urlpatterns
 

@@ -53,5 +53,11 @@ class Task:
     def getUrl(self, url):
         return 'http://{}:{}/{}'.format(self.domain, self.port, url)
 
-    def getConfig(self, conf):
-        return getattr(OverConfig, conf)
+    def getConfig(self, conf, function=False):
+        return getattr(OverConfig, conf)() if function else getattr(OverConfig, conf)
+
+    def encryptFile(self, filename, plaintext):
+        OverConfig.encryptFile(filename, plaintext)
+
+    def decryptFile(self, filename):
+        return OverConfig.decryptFile(filename)

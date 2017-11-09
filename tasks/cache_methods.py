@@ -11,6 +11,7 @@ url = 'authenta/method.json'
 import urllib.request, urllib.parse, json
 url = task.getUrl(url)
 
+
 task.update('running', 'Get methods')
 with urllib.request.urlopen(url) as url:
     methods = json.loads(url.read().decode())
@@ -22,7 +23,8 @@ with urllib.request.urlopen(url) as url:
 
     task.update('running', 'Make cache')
     for method in cache:
-        with open('{}/{}.json'.format(task.getConfig('dir_json'), method), 'w') as outfile:
-            json.dump(cache[method], outfile, indent=4, ensure_ascii=False)
-
+        text = json.dumps(cache[method], ensure_ascii=False).encode('ascii')
+        task.encryptFile(method, text)
+        
+print(task.decryptFile('LDAP'))
 task.update('complete', 'Complete')

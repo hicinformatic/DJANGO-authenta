@@ -97,18 +97,6 @@ class Method(models.Model):
         self.save()
         return True
 
-    def generateCache():
-        for method in AuthentaConfig.additional_methods:
-            methods = Method.objects.filter(status=True, method=method[0])
-            file_json = '{}/{}_{}'.format(AuthentaConfig.dir_json, method[0], AuthentaConfig.cache_methods)
-            with open(file_json, 'w') as outfile:
-                json_serializer = serializers.get_serializer('json')()
-                json_serializer.serialize(methods, stream=outfile, indent=4)
-
-    def save(self, *args, **kwargs):
-        super(Method, self).save(*args, **kwargs)
-        #self.generateCache()
-
 class User(AbstractUser):
     username = models.CharField(_('Username'), blank=AuthentaConfig.usernamenull, max_length=254, null=AuthentaConfig.usernamenull, unique=AuthentaConfig.usernameuniq, validators=[AbstractUser.username_validator],)
     email = models.EmailField(_('Email address'), blank=AuthentaConfig.emailnull, null=AuthentaConfig.emailnull, unique=AuthentaConfig.emailuniq)
