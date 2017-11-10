@@ -87,9 +87,10 @@ class TaskPurge(HybridResponseMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(TaskPurge, self).get_context_data(**kwargs)
-        tasks = Task.objects.all()
+        tasks = Task.objects.all().order_by('-id')[1000:0].values_list('id', flat=True)
+        tasks.first()
         number = tasks.count()
-        tasks.delete()
+        Task.objects.exclude(pk__in=list(tasks)).delete()
         context['fields'] = ['number', ]
         context['object_list'] = [objectDict({ 'number': number })]
         return context
