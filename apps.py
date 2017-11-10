@@ -38,6 +38,7 @@ class OverConfig(object):
     vprofile = True
     vprofilelist = True
     vuser_absolute = 'authenta:Profile'
+    vmethod_absolute = 'authenta:MethodDetail'
     vtask_absolute = 'authenta:TaskDetail'
     vextension = '.html'
     ext_html = 'html'

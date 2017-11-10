@@ -80,6 +80,10 @@ class MethodAdmin(admin.ModelAdmin):
         'fields': ('update_by', 'date_create', 'date_update', 'error'),}),
     )
 
+    def save_model(self, request, obj, form, change):
+        obj.update_by = getattr(request.user, AuthentaConfig.uniqidentity)
+        super(MethodAdmin, self).save_model(request, obj, form, change)
+
     actions = ['checkAuthentications']
     def checkAuthentications(self, request, queryset):
         for authent in queryset:
@@ -96,4 +100,8 @@ class MethodAdmin(admin.ModelAdmin):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ( '__str__', 'info', 'status', 'dateupdate', )
+    list_display = ( '__str__', 'info', 'status', 'date_update', )
+
+    def save_model(self, request, obj, form, change):
+        obj.update_by = getattr(request.user, AuthentaConfig.uniqidentity)
+        super(TaskAdmin, self).save_model(request, obj, form, change)

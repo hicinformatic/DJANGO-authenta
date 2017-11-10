@@ -30,9 +30,10 @@ if AuthentaConfig.vprofile:
         r'^profile/(?P<pk>\d+).?(?P<extension>({}))?/?$'.format(extensions_regex),
         views.Profile.as_view(),
         name='Profile'))
-
 urlpatterns.append(url(r'^authenta/method/?.?(?P<extension>({}))?$'.format(extensions_regex), views.MethodList.as_view(), name='MethodList'))
-urlpatterns.append(url(r'^authenta/task/details/(?P<pk>\d+).?(?P<extension>({}))?$'.format(extensions_regex), views.TaskDetail.as_view(), name='TaskDetail'))
+urlpatterns.append(url(r'^authenta/method/details/(?P<pk>\d+).?(?P<extension>({}))?$'.format(extensions_regex), views.MethodDetail.as_view(), name='MethodDetail'))
+urlpatterns.append(url(r'^authenta/method/function/(?P<pk>\d+).?(?P<extension>({}))?$'.format(extensions_regex), views.MethodFunction.as_view(), name='MethodFunction'))
 urlpatterns.append(url(r'^authenta/task/create.?(?P<extension>({}))?/?$'.format(extensions_regex), views.TaskCreate.as_view(), name='TaskCreate'))
+urlpatterns.append(url(r'^authenta/task/details/(?P<pk>\d+).?(?P<extension>({}))?$'.format(extensions_regex), views.TaskDetail.as_view(), name='TaskDetail'))
 urlpatterns.append(url(r'^authenta/task/update/(?P<pk>\d+).?(?P<extension>({}))?/?$'.format(extensions_regex), views.TaskUpdate.as_view(), name='TaskUpdate'))
 urlpatterns.append(url(r'^authenta/task/purge.?(?P<extension>({}))?/?$'.format(extensions_regex), views.TaskPurge.as_view(), name='TaskPurge'))

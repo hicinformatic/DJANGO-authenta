@@ -15,6 +15,15 @@ if AuthentaConfig.ldap_activated: from .methods.ldap import methodLDAP
 
 import unicodedata
 
+class Update(models.Model):
+    date_create = models.DateTimeField(_('Creation date'), auto_now_add=True, editable=False)
+    date_update = models.DateTimeField(_('Last modification date'), auto_now=True, editable=False)
+    update_by = models.CharField(_('Update by'), blank=True, editable=False, max_length=254, null=True)
+    error = models.TextField(_('Error encountered'), blank=True, null=True)
+
+    class Meta:
+        abstract = True
+
 class Group(Group):
     class Meta:
         verbose_name = _('group')
@@ -23,7 +32,7 @@ class Group(Group):
 def ldap_certsdir(instance, filename):
     return '{}/{}'.format(AuthentaConfig.dir_ldapcerts, instance.name)
 
-class Method(models.Model):
+class Method(Update):
     method = models.CharField(_('Method'), choices=AuthentaConfig.additional_methods, default='LDAP', help_text=_('Authentication type'), max_length=4)
     name = models.CharField(_('Authentication Name'), help_text=_('Naming your authentication'), max_length=254)
     status = models.BooleanField(_('Activated'), default=True, help_text=_('Authentication enable or disable'))
@@ -32,10 +41,6 @@ class Method(models.Model):
     is_superuser = models.BooleanField(_('Superuser'), default=False)
     groups = models.ManyToManyField(Group, verbose_name=_('Groups associated'), blank=True)
     permissions = models.ManyToManyField(Permission, verbose_name=_('Permissions associated'), blank=True)
-    date_create = models.DateTimeField(_('Creation date'), auto_now_add=True, editable=False)
-    date_update = models.DateTimeField(_('Last modification date'), auto_now=True, editable=False)
-    update_by = models.CharField(_('Update by'), editable=False, max_length=254)
-    error = models.TextField(_('Error encountered'), blank=True, editable=False, null=True)
     obj = None
 
     vn_ldaphost = _('Use hostname or IP address')
@@ -78,6 +83,10 @@ class Method(models.Model):
 
     def __str__(self):
         return '%s | %s' % (self.method, self.name)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return AuthentaConfig.vmethod_absolute, (), {'pk': self.id, 'extension': AuthentaConfig.vextension}
 
     def get(self, *args, **kwargs):
         logmethis(7, 'get=%s, method=%s' % (self.name, self.method))
@@ -138,14 +147,10 @@ class User(AbstractUser):
 
 from datetime import datetime, timedelta
 import json, subprocess, sys, urllib.parse
-class Task(models.Model):
+class Task(Update):
     task = models.CharField(_('Task'), max_length=254, choices=AuthentaConfig.tasks, help_text=_('Task to be done'))
     info = models.TextField(_('Information about the task'), blank=True, null=True, help_text=_('More informations'))
     status = models.CharField(_('Status'), max_length=8, choices=AuthentaConfig.status, default='order', help_text=_('Can be: {}'.format(', '.join([s[0] for s in AuthentaConfig.status]))))
-    error = models.TextField(_('Error encountered'), blank=True, null=True, help_text=_('Error returned'))
-    updateby = models.CharField(_('Last update by'), blank=True, editable=False, max_length=254, null=True)
-    datecreate = models.DateTimeField(_('Creation date'), auto_now_add=True, editable=False)
-    dateupdate = models.DateTimeField(_('Last modification date'), auto_now=True, editable=False)
 
     class Meta:
         verbose_name        = AuthentaConfig.vn_task
@@ -176,9 +181,6 @@ class Task(models.Model):
         response = super(Task, self).save(*args, **kwargs)
         self.start_task()
         return response
-
-    def update_by(self, request):
-        self.updateby = request.user.username
 
     def check_task(self):
         if self.status == 'order':
