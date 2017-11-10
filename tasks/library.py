@@ -30,11 +30,10 @@ class Task:
         os.unlink(self.pid)
 
     def update(self, status, info=''):
-        data = {'task': self.scriptname, 'status': status, 'info': '', 'error': '' }
-        if status == 'error' and (info is not None or info != ''):
-            data['error'] = info
-        elif info is not None or info != '':
-            data['info'] = info
+        data = {'task': self.scriptname, 'status': status, }
+        if info is not None or info != '':
+            if status == 'error': data['error'] = info
+            else: data['info'] = info
         url = 'http://{}:{}/{}/{}.json'.format(self.domain, self.port, self.get, self.task)
 
         cj = http.cookiejar.CookieJar()

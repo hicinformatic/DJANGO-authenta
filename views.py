@@ -1,23 +1,19 @@
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
-from django.views.generic import DetailView
+from django.views.generic import DetailView, TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.utils.decorators import method_decorator
+from django.views import View
 
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.http import Http404  
 
 from .apps import AuthentaConfig
-from .conversion import HybridFormResponseMixin, HybridResponseMixin
+from .conversion import HybridFormResponseMixin, HybridResponseMixin, objectDict
 from .models import User, Method, Task
 from .forms import SignUpForm
 from .decorators import localcalloradminorstaff
-
-
-class objectDict(object):
-    def __init__(self, d):
-        self.__dict__ = d
 
 if AuthentaConfig.vsignup:
     class SignUp(HybridFormResponseMixin, CreateView):
@@ -84,6 +80,19 @@ if AuthentaConfig.vsignout:
             context['fields'] = ['status', ]
             context['object_list'] = [objectDict({ 'status': 'disconnected' })]
             return context
+
+@method_decorator(localcalloradminorstaff, name='dispatch')
+class TaskPurge(HybridResponseMixin, TemplateView):
+    template_name = 'authenta/method/detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(TaskPurge, self).get_context_data(**kwargs)
+        tasks = Task.objects.all()
+        number = tasks.count()
+        tasks.delete()
+        context['fields'] = ['number', ]
+        context['object_list'] = [objectDict({ 'number': number })]
+        return context
 
 @method_decorator(localcalloradminorstaff, name='dispatch')
 class MethodList(HybridResponseMixin, ListView):

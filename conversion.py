@@ -3,6 +3,18 @@ from django.http import HttpResponse, JsonResponse
 from django.middleware.csrf import get_token
 from .apps import AuthentaConfig
 
+class objectDict(object):
+    def __init__(self, d):
+        self.__dict__ = d
+
+    class _meta:
+        def get_field(self):
+            return objectDict._meta()
+
+        def get_internal_type(self):
+            return None
+
+
 class HybridFormResponseMixin:
     def form_invalid(self, form):
         response = super(HybridFormResponseMixin, self).form_invalid(form)

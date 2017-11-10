@@ -19,8 +19,8 @@ with urllib.request.urlopen(url) as url:
             cache[method['method']] = {}
         cache[method['method']][method['id']] = method
 
-    task.update('running', 'Make cache')
     for method in cache:
         text = json.dumps(cache[method], ensure_ascii=False).encode('ascii')
-        task.encryptFile(method, text)
+        task.encryptCache(method, text)
+
 task.update('complete', 'Complete')

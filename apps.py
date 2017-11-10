@@ -89,11 +89,16 @@ class OverConfig(object):
     status = (('error', _('In error')), ('order', _('Ordered')), ('ready', _('Ready')), ('start', _('Started')), ('running', _('Running')), ('complete', _('Complete')), )
     tasks = (
         ('check_os',        _('check(OS)')),
+        ('purge_tasks',  _('Purge tasks')),
         ('cache_methods',  _('Generate cache')),
     )
     subtasks = {}
     deltas = {
+        'purge_tasks': 3600,
         'cache_methods': 3600,
+    }
+    purge = {
+        'purge_tasks': {'by': 1000, 'day': 30 },
     }
     ldap_activated = True
     choices_ldapscope = (('SCOPE_BASE', 'base (scope=base)'), ('SCOPE_ONELEVEL', 'onelevel (scope=onelevel)'), ('SCOPE_SUBTREE', 'subtree (scope=subtree)'))

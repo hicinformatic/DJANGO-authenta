@@ -7,15 +7,13 @@ from django.urls import reverse
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import get_template
 from django.template import Context
-#from django.core.mail import send_mail
-from django.core import serializers
 
 from .manager import UserManager
 from .apps import AuthentaConfig, logmethis
 
-import unicodedata
-
 if AuthentaConfig.ldap_activated: from .methods.ldap import methodLDAP
+
+import unicodedata
 
 class Group(Group):
     class Meta:
