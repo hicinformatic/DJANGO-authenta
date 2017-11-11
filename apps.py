@@ -91,6 +91,7 @@ class OverConfig(object):
     tasks = (
         ('check_os',        _('check(OS)')),
         ('purge_tasks',  _('Purge tasks')),
+        ('check_methods',  _('Check methods')),
         ('cache_methods',  _('Generate cache')),
     )
     subtasks = {}

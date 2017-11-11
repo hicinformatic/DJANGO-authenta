@@ -34,9 +34,12 @@ if AuthentaConfig.ldap_activated:
                 params={'username': self.username_field.verbose_name},
             )
 
+
 class MethodFormFunction(forms.ModelForm):
-    function = forms.CharField(widget=forms.Textarea, help_text=_('Allows access to an internal function of the method'))
-    error_messages = {'function_invalid': _("Invalid function"),}
+    function = forms.CharField(widget=forms.Textarea, help_text='Can access to check()')
+    error_messages = {
+        'function_invalid': _("Invalid function"),
+    }
 
     class Meta:
         model = Method
@@ -47,5 +50,9 @@ class MethodFormFunction(forms.ModelForm):
         if hasattr(self.instance.obj, self.cleaned_data['function']):
             getattr(self.instance.obj, self.cleaned_data['function'])()
         else:
-            raise forms.ValidationError( .error_messages['function_invalid'], code='function_invalid', params={'function': self.function.help_text}, )
+            raise forms.ValidationError(
+                self.error_messages['function_invalid'],
+                code='function_invalid',
+                params={'function': 'test'},
+            )
         return super(MethodFormFunction, self).clean()
