@@ -1,4 +1,5 @@
 .gitignore
+method/__pycache__/
 __pycache__/
 migrations/
 logs/
