@@ -41,7 +41,7 @@ class OverConfig(object):
     vmethod_absolute = 'authenta:MethodDetail'
     vtask_absolute = 'authenta:TaskDetail'
     vextension = '.html'
-    ext_html = 'html'
+    extensions = { 'html': '.html', 'json': '.json', 'txt': '.txt', }
     ext_encrypted = 'enc'
 
     contenttype_html = 'text/html'
@@ -53,7 +53,7 @@ class OverConfig(object):
     viewregister_accepted = ['signup', 'register']
     viewlogin_accepted = ['signin', 'login']
     viewlogout_accepted = ['signout', 'logout']
-    extensions_accepted = ['html', 'json', 'txt']
+    extensions_accepted = [ext for ext in extensions ]
 
     template_login = 'authenta/admin/login.html'
     template_changelist = 'authenta/admin/change_list_method.html'

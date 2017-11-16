@@ -127,6 +127,14 @@ class MethodFunction(HybridFormResponseMixin, UpdateView):
     slug = id
     token = True
 
+    def dispatch(self, request, *args, **kwargs):
+        if 'extension' in kwargs:
+            self.extension = AuthentaConfig.extensions[kwargs['extension']]
+        return super(MethodFunction, self).dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse (AuthentaConfig.vmethod_absolute, kwargs={'pk': self.object.id, 'extension': self.extension})
+
     def get_context_data(self, **kwargs):
         context = super(MethodFunction, self).get_context_data(**kwargs)
         context['fields'] = ['id', 'name', 'status', 'error']
@@ -143,10 +151,7 @@ class TaskCreate(HybridFormResponseMixin, CreateView):
     def post(self, request, *args, **kwargs):
         form = self.get_form()
         form.instance.update_by = getattr(self.request.user, AuthentaConfig.uniqidentity)
-        if form.is_valid():
-            return self.form_valid(form)
-        else:
-            return self.form_invalid(form)
+        return self.form_valid(form)  if form.is_valid() else self.form_invalid(form)
 
 @method_decorator(localcalloradminorstaff, name='dispatch')
 class TaskUpdate(HybridFormResponseMixin, UpdateView):

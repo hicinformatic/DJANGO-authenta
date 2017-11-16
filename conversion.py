@@ -16,6 +16,8 @@ class objectDict(object):
 
 
 class HybridFormResponseMixin:
+    extension = AuthentaConfig.extensions['json']
+    
     def form_invalid(self, form):
         response = super(HybridFormResponseMixin, self).form_invalid(form)
         if self.kwargs['extension'] == 'json':

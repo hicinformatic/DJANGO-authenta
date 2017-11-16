@@ -31,7 +31,7 @@ if AuthentaConfig.vprofile:
         views.Profile.as_view(),
         name='Profile'))
 urlpatterns.append(url(r'^authenta/method/?.?(?P<extension>({}))?$'.format(extensions_regex), views.MethodList.as_view(), name='MethodList'))
-urlpatterns.append(url(r'^authenta/method/details/(?P<pk>\d+).?(?P<extension>({}))?$'.format(extensions_regex), views.MethodDetail.as_view(), name='MethodDetail'))
+urlpatterns.append(url(r'^authenta/method/details/(?P<pk>\d+)\.?(?P<extension>({}))?$'.format(extensions_regex), views.MethodDetail.as_view(), name='MethodDetail'))
 urlpatterns.append(url(r'^authenta/method/function/(?P<pk>\d+).?(?P<extension>({}))?$'.format(extensions_regex), views.MethodFunction.as_view(), name='MethodFunction'))
 urlpatterns.append(url(r'^authenta/task/create.?(?P<extension>({}))?/?$'.format(extensions_regex), views.TaskCreate.as_view(), name='TaskCreate'))
 urlpatterns.append(url(r'^authenta/task/details/(?P<pk>\d+).?(?P<extension>({}))?$'.format(extensions_regex), views.TaskDetail.as_view(), name='TaskDetail'))

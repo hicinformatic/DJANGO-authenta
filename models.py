@@ -86,7 +86,7 @@ class Method(Update):
 
     @models.permalink
     def get_absolute_url(self):
-        return AuthentaConfig.vmethod_absolute, (), {'pk': self.id, 'extension': AuthentaConfig.vextension}
+        return AuthentaConfig.vmethod_absolute, (), {'pk': self.id }
 
     def get(self, *args, **kwargs):
         logmethis(7, 'get=%s, method=%s' % (self.name, self.method))
