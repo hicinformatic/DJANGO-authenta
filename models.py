@@ -161,7 +161,7 @@ class Task(Update):
 
     @models.permalink
     def get_absolute_url(self):
-        return AuthentaConfig.vtask_absolute, (), {'pk': self.id, 'extension': AuthentaConfig.vextension}
+        return AuthentaConfig.vtask_absolute, (), {'pk': self.id, 'extension': AuthentaConfig.html_extension}
 
     #def get_absolute_url(self):
     #    return reverse(AuthentaConfig.vtask_absolute, args=[str(self.id), AuthentaConfig.vextension])

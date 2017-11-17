@@ -35,6 +35,7 @@ class Task:
             if status == 'error': data['error'] = info
             else: data['info'] = info
         url = 'http://{}:{}/{}/{}.json'.format(self.domain, self.port, self.get, self.task)
+        print(url)
 
         cj = http.cookiejar.CookieJar()
         base = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))

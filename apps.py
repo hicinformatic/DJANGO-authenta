@@ -26,29 +26,36 @@ class OverConfig(object):
     port = 8000
     localcallname = _('local_robot')
 
-    vn_method = _('authentication method')
-    vpn_method = _('authentication methods')
-    vn_task = _('# Task')
-    vpn_task = _('# Tasks')
-    contenttype_txt = 'text/plain'
-    charset = 'utf-8'
-    vsignup = True
-    vsignin = True
-    vsignout = True
-    vprofile = True
-    vprofilelist = True
-    vuser_absolute = 'authenta:Profile'
-    vmethod_absolute = 'authenta:MethodDetail'
-    vtask_absolute = 'authenta:TaskDetail'
-    vextension = '.html'
-    extensions = { 'html': '.html', 'json': '.json', 'txt': '.txt', }
-    ext_encrypted = 'enc'
+    kwarg_extension = 'extension'
+    html_extension = 'html'
+    json_extension = 'json'
+    txt_extension = 'txt'
+    enc_extension = 'enc'
+    extensions = { html_extension: '.html', json_extension: '.json', txt_extension: '.txt', }
+    object_list = 'object_list'
+    object_fields = 'fields'
 
+    charset = 'utf-8'
     contenttype_html = 'text/html'
     contenttype_csv = 'text/csv'
     contenttype_txt = 'text/plain'
     contenttype_svg = 'image/svg+xml'
     contenttype_js = 'application/javascript'
+
+    vn_method = _('authentication method')
+    vpn_method = _('authentication methods')
+    vn_task = _('# Task')
+    vpn_task = _('# Tasks')
+
+    vsignup = True
+    vsignin = True
+    vsignout = True
+    vprofile = True
+    vprofilelist = True
+
+    vuser_absolute = 'authenta:Profile'
+    vmethod_absolute = 'authenta:MethodDetail'
+    vtask_absolute = 'authenta:TaskDetail'
 
     viewregister_accepted = ['signup', 'register']
     viewlogin_accepted = ['signin', 'login']

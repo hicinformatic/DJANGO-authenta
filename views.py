@@ -1,22 +1,48 @@
-from django.views.generic.edit import CreateView, UpdateView, FormView
+from django.views.generic.edit import (CreateView, UpdateView)
 from django.views.generic.list import ListView
 from django.views.generic import DetailView, TemplateView
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import (LoginView, LogoutView)
 from django.utils.decorators import method_decorator
 from django.views import View
+
+from django.middleware.csrf import get_token
 
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.http import Http404  
 
 from .apps import AuthentaConfig, logmethis
-from .conversion import HybridFormResponseMixin, HybridResponseMixin, objectDict
+from .conversion import HybridResponseMixin, objectDict
 from .models import User, Method, Task
 from .forms import SignUpForm, MethodFormFunction
 from .decorators import localcalloradminorstaff
 
+"""
+██╗   ██╗██╗███████╗██╗    ██╗     ██████╗ ██╗   ██╗███████╗██████╗ ██████╗ ██╗██████╗ ███████╗
+██║   ██║██║██╔════╝██║    ██║    ██╔═══██╗██║   ██║██╔════╝██╔══██╗██╔══██╗██║██╔══██╗██╔════╝
+██║   ██║██║█████╗  ██║ █╗ ██║    ██║   ██║██║   ██║█████╗  ██████╔╝██████╔╝██║██║  ██║█████╗  
+╚██╗ ██╔╝██║██╔══╝  ██║███╗██║    ██║   ██║╚██╗ ██╔╝██╔══╝  ██╔══██╗██╔══██╗██║██║  ██║██╔══╝  
+ ╚████╔╝ ██║███████╗╚███╔███╔╝    ╚██████╔╝ ╚████╔╝ ███████╗██║  ██║██║  ██║██║██████╔╝███████╗
+  ╚═══╝  ╚═╝╚══════╝ ╚══╝╚══╝      ╚═════╝   ╚═══╝  ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═════╝ ╚══════╝
+"""
+#class UpdateView(OriginalUpdateView):
+#    def dispatch(self, request, *args, **kwargs):
+#        if 'extension' in kwargs: self.extension = AuthentaConfig.extensions[kwargs['extension']]
+#        return super(UpdateView, self).dispatch(request, *args, **kwargs)
+
+
+
+"""
+██╗   ██╗███████╗███████╗██████╗ 
+██║   ██║██╔════╝██╔════╝██╔══██╗
+██║   ██║███████╗█████╗  ██████╔╝
+██║   ██║╚════██║██╔══╝  ██╔══██╗
+╚██████╔╝███████║███████╗██║  ██║
+ ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝
+"""
+
 if AuthentaConfig.vsignup:
-    class SignUp(HybridFormResponseMixin, CreateView):
+    class SignUp(HybridResponseMixin, CreateView):
         form_class = SignUpForm
         template_name = 'authenta/form.html'
 
@@ -31,7 +57,7 @@ if AuthentaConfig.vsignup:
             return context
 
 if AuthentaConfig.vsignin:
-    class SignIn(HybridFormResponseMixin, LoginView):
+    class SignIn(HybridResponseMixin, LoginView):
         template_name = 'authenta/form.html'
 
         def dispatch(self, request, *args, **kwargs):
@@ -47,6 +73,16 @@ if AuthentaConfig.vsignin:
         def get_success_url(self):
             if self.request.user.is_authenticated:
                 return reverse('authenta:Profile', args=[str(self.request.user.id), '.html'])
+
+if AuthentaConfig.vsignout:
+    class SignOut(HybridResponseMixin, LogoutView):
+        template_name = 'authenta/profile.html'
+
+        def get_context_data(self, **kwargs):
+            context = super(SignOut, self).get_context_data(**kwargs)
+            context['fields'] = ['status', ]
+            context['object_list'] = [objectDict({ 'status': 'disconnected' })]
+            return context
 
 if AuthentaConfig.vprofilelist:
     class ProfileList(HybridResponseMixin, ListView):
@@ -71,29 +107,15 @@ if AuthentaConfig.vprofile:
             context['object_list'] = [self.object]
             return context
 
-if AuthentaConfig.vsignout:
-    class SignOut(HybridResponseMixin, LogoutView):
-        template_name = 'authenta/profile.html'
 
-        def get_context_data(self, **kwargs):
-            context = super(SignOut, self).get_context_data(**kwargs)
-            context['fields'] = ['status', ]
-            context['object_list'] = [objectDict({ 'status': 'disconnected' })]
-            return context
-
-@method_decorator(localcalloradminorstaff, name='dispatch')
-class TaskPurge(HybridResponseMixin, TemplateView):
-    template_name = 'authenta/method/detail.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(TaskPurge, self).get_context_data(**kwargs)
-        tasks = Task.objects.all().order_by('-id')[1000:0].values_list('id', flat=True)
-        tasks.first()
-        number = tasks.count()
-        Task.objects.exclude(pk__in=list(tasks)).delete()
-        context['fields'] = ['number', ]
-        context['object_list'] = [objectDict({ 'number': number })]
-        return context
+"""
+███╗   ███╗███████╗████████╗██╗  ██╗ ██████╗ ██████╗ 
+████╗ ████║██╔════╝╚══██╔══╝██║  ██║██╔═══██╗██╔══██╗
+██╔████╔██║█████╗     ██║   ███████║██║   ██║██║  ██║
+██║╚██╔╝██║██╔══╝     ██║   ██╔══██║██║   ██║██║  ██║
+██║ ╚═╝ ██║███████╗   ██║   ██║  ██║╚██████╔╝██████╔╝
+╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝  
+"""
 
 @method_decorator(localcalloradminorstaff, name='dispatch')
 class MethodList(HybridResponseMixin, ListView):
@@ -120,17 +142,12 @@ class MethodDetail(HybridResponseMixin, DetailView):
         return context
 
 @method_decorator(localcalloradminorstaff, name='dispatch')
-class MethodFunction(HybridFormResponseMixin, UpdateView):
+class MethodFunction(HybridResponseMixin, UpdateView):
     model = Method
     template_name = 'authenta/form.html'
     form_class = MethodFormFunction
     slug = id
     token = True
-
-    def dispatch(self, request, *args, **kwargs):
-        if 'extension' in kwargs:
-            self.extension = AuthentaConfig.extensions[kwargs['extension']]
-        return super(MethodFunction, self).dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse (AuthentaConfig.vmethod_absolute, kwargs={'pk': self.object.id, 'extension': self.extension})
@@ -141,28 +158,37 @@ class MethodFunction(HybridFormResponseMixin, UpdateView):
         context['object_list'] = [self.object]
         return context
 
+"""
+████████╗ █████╗ ███████╗██╗  ██╗
+╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
+   ██║   ███████║███████╗█████╔╝ 
+   ██║   ██╔══██║╚════██║██╔═██╗ 
+   ██║   ██║  ██║███████║██║  ██╗
+   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
+"""
+
 @method_decorator(localcalloradminorstaff, name='dispatch')
-class TaskCreate(HybridFormResponseMixin, CreateView):
+class TaskCreate(HybridResponseMixin, CreateView):
     model = Task
     fields = ['task', 'info']
     template_name = 'authenta/form.html'
-    token = True
+    is_form = True
+    has_token = True
+
+    def get_context_data(self, **kwargs):
+        context = super(TaskCreate, self).get_context_data(**kwargs)
+        context['fields'] = self.fields
+        if self.kwargs['extension'] != 'html':
+            context['object_list'] = [objectDict({ field: context['form'][field].help_text for field in context['fields']})]
+        return context
+
+    def get_success_url(self):
+        return reverse (AuthentaConfig.vtask_absolute, kwargs={'pk': self.object.id, 'extension': self.extension})
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
         form.instance.update_by = getattr(self.request.user, AuthentaConfig.uniqidentity)
         return self.form_valid(form)  if form.is_valid() else self.form_invalid(form)
-
-@method_decorator(localcalloradminorstaff, name='dispatch')
-class TaskUpdate(HybridFormResponseMixin, UpdateView):
-    model = Task
-    fields = ['task', 'status', 'info', 'error']
-    template_name = 'authenta/form.html'
-    token = True
-
-    def form_valid(self, form):
-        self.object.update_by = getattr(self.request.user, AuthentaConfig.uniqidentity)
-        return super(TaskUpdate, self).form_valid(form)
 
 @method_decorator(localcalloradminorstaff, name='dispatch')
 class TaskDetail(HybridResponseMixin, DetailView):
@@ -175,12 +201,28 @@ class TaskDetail(HybridResponseMixin, DetailView):
         context['object_list'] = [self.object]
         return context
 
-def TestView(request):
-    from django.core.mail import send_mail
-    send_mail(
-        'Subject here',
-        'Here is the message.',
-        'from@example.com',
-        ['charlesdelencre@gmail.com'],
-        fail_silently=False,
-    )
+@method_decorator(localcalloradminorstaff, name='dispatch')
+class TaskUpdate(HybridResponseMixin, UpdateView):
+    model = Task
+    fields = ['task', 'status', 'info', 'error']
+    template_name = 'authenta/form.html'
+    token = True
+    is_form = True
+
+    def form_valid(self, form):
+        self.object.update_by = getattr(self.request.user, AuthentaConfig.uniqidentity)
+        return super(TaskUpdate, self).form_valid(form)
+
+@method_decorator(localcalloradminorstaff, name='dispatch')
+class TaskPurge(HybridResponseMixin, TemplateView):
+    template_name = 'authenta/method/detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(TaskPurge, self).get_context_data(**kwargs)
+        tasks = Task.objects.all().order_by('-id')[1000:0].values_list('id', flat=True)
+        tasks.first()
+        number = tasks.count()
+        Task.objects.exclude(pk__in=list(tasks)).delete()
+        context['fields'] = ['number', ]
+        context['object_list'] = [objectDict({ 'number': number })]
+        return context
