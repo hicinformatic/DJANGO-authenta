@@ -58,7 +58,7 @@ error_status.boolean = True
 
 @admin.register(Method)
 class MethodAdmin(admin.ModelAdmin):
-    change_list_template = AuthentaConfig.template_changelist
+    change_list_template = AuthentaConfig.template_method_admin_changelist
     form = MethodAdminForm
     fieldsets = ((_('Globals'), { 'fields': ('method', 'name', 'status'), }),)
     filter_horizontal = ('groups', 'permissions')

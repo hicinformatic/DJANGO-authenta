@@ -7,9 +7,6 @@ class objectDict(object):
     def __init__(self, d):
         self.__dict__ = d
 
-    def addToken(self):
-        setattr(self, 'csrftoken', 'test')
-
     class _meta:
         def get_field(self):
             return objectDict._meta()
@@ -20,54 +17,50 @@ class objectDict(object):
 class HybridResponseMixin:
     is_form = False
     has_token = False
-    object_fields = AuthentaConfig.object_fields
     zero_flat = False
-
-    def dispatch(self, request, *args, **kwargs):
-        if AuthentaConfig.kwarg_extension in kwargs: self.extension = AuthentaConfig.extensions[kwargs[AuthentaConfig.kwarg_extension]]
-        return super(HybridResponseMixin, self).dispatch(request, *args, **kwargs)
+    extension = AuthentaConfig.html_extension
 
     def render_to_response(self, context):
         response = super(HybridResponseMixin, self).render_to_response(context)
-        if self.kwargs[AuthentaConfig.kwarg_extension] == AuthentaConfig.json_extension:
+        if AuthentaConfig.kwarg_extension in self.kwargs and self.kwargs[AuthentaConfig.kwarg_extension] in AuthentaConfig.extensions_accepted:
+            self.extension = self.kwargs[AuthentaConfig.kwarg_extension]
+        if self.extension == AuthentaConfig.json_extension:
+            if self.is_form: return JsonResponse(self.jsonFormFields(context)[0] if self.zero_flat else self.jsonFormFields(context), safe=False)
             return JsonResponse(self.jsonFields(context)[0] if self.zero_flat else self.jsonFields(context), safe=False)
-        elif self.kwargs[AuthentaConfig.kwarg_extension] == AuthentaConfig.txt_extension:
+        elif self.extension == AuthentaConfig.txt_extension:
+            if self.is_form: return HttpResponse(self.textFormFields(context), content_type=AuthentaConfig.contenttype_txt)
             return HttpResponse(self.textFields(context), content_type=AuthentaConfig.contenttype_txt)
         else:
             return response
 
+    def jsonFormFields(self, context):
+        jsonData = { field.html_name: field.help_text for field in context['form'] }
+        if self.has_token: jsonData[AuthentaConfig.csrftoken_label] = get_token(self.request)
+        return jsonData
+
     def jsonFields(self, context):
-        #data = []
-        #for obj in context[AuthentaConfig.object_list]:
-        #    subs = {}
-        #    for f in context[self.object_fields]:
-        #        subs[f] = self.jsonRelated(context, obj, f) if obj._meta.get_field(f).get_internal_type() == 'ManyToManyField' else getattr(obj, f)
-        #    if self.is_form: subs['csrftoken'] = get_token(self.request)
-        #    data.append(subs)
-        #return data
         return [{
             f: self.jsonRelated(context, obj, f)
-                if obj._meta.get_field(f).get_internal_type() == 'ManyToManyField' else getattr(obj, f) for f in context[self.object_fields] 
-            } for obj in context[AuthentaConfig.object_list]]
+            if hasattr(obj, '_meta') and obj._meta.get_field(f).get_internal_type() in AuthentaConfig.meta_accepted else 
+            getattr(obj, f) for f in context[AuthentaConfig.object_fields] 
+        } for obj in context[AuthentaConfig.object_list]]
 
     def jsonRelated(self, context, obj, field):
         relations = getattr(obj, field).all()
         return [{ u:getattr(rel, u)() if callable(getattr(rel, u)) else getattr(rel, u) for u in context[field] } for rel in relations] if relations else False
 
+    def textFormFields(self, context):
+        txtData = [AuthentaConfig.template_txt.format(field.html_name, field.help_text) for field in context['form']]
+        if self.has_token: txtData.append(AuthentaConfig.template_txt.format(AuthentaConfig.csrftoken_label, get_token(self.request)))
+        return AuthentaConfig.separator_txt.join(txtData)
+
     def textFields(self, context):
-        data = []
-        for obj in context[AuthentaConfig.object_list]:
-            subs = []
-            for f in context[self.object_fields]:
-                subs.append(AuthentaConfig.manytemplate_txt.format(f, self.textRelated(context, obj, f)) if obj._meta.get_field(f).get_internal_type() == 'ManyToManyField' else AuthentaConfig.template_txt.format(f, getattr(obj, f)))
-            if self.is_form: subs.append(AuthentaConfig.manytemplate_txt.format('csrftoken', get_token(self.request)))
-            data.append(AuthentaConfig.separator_txt.join(subs))
-        return AuthentaConfig.manyseparator_txt.join(data)
-        #return '\n'.join([
-        #    AuthentaConfig.separator_txt.join([
-        #        AuthentaConfig.manytemplate_txt.format(f, self.textRelated(context, obj, f)) 
-        #        if obj._meta.get_field(f).get_internal_type() == 'ManyToManyField' else AuthentaConfig.template_txt.format(f, getattr(obj, f)) for f in context[self.object_fields] 
-        #    ]) for obj in context[AuthentaConfig.object_list] ])
+        return '\n'.join([
+            AuthentaConfig.separator_txt.join([
+                AuthentaConfig.manytemplate_txt.format(f, self.textRelated(context, obj, f)) 
+                if obj._meta.get_field(f).get_internal_type() in AuthentaConfig.meta_accepted else 
+                AuthentaConfig.template_txt.format(f, getattr(obj, f)) for f in context[AuthentaConfig.object_fields] 
+            ]) for obj in context[AuthentaConfig.object_list] ])
 
     def textRelated(self, context, obj, field):
         relations = getattr(obj, field).all()
@@ -106,7 +99,7 @@ class HybridFormResponseMixin:
         response = super(HybridFormResponseMixin, self).render_to_response(context)
         if self.kwargs[AuthentaConfig.kwarg_extension] == 'json':
             data = {field.html_name: field.help_text for field in context['form']}
-            if self.token: data['csrftoken'] = get_token(self.request)
+            if self.token: data[AuthentaConfig.csrftoken_label] = get_token(self.request)
             return JsonResponse(data)
         elif self.kwargs[AuthentaConfig.kwarg_extension] == 'txt':
             data = '\n'.join([AuthentaConfig.template_txt.format(field.html_name, field.help_text) for field in context['form']])

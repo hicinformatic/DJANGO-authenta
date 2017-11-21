@@ -13,6 +13,12 @@ class OverConfig(object):
     loglvl = 7
     locallog = True
     syslog = False
+    namespace = 'authenta'
+
+    vn_method = _('authentication method')
+    vpn_method = _('authentication methods')
+    vn_task = _('# Task')
+    vpn_task = _('# Tasks')
 
     binary = '/bin/bash'
     binary_ext = '.sh'
@@ -31,9 +37,18 @@ class OverConfig(object):
     json_extension = 'json'
     txt_extension = 'txt'
     enc_extension = 'enc'
-    extensions = { html_extension: '.html', json_extension: '.json', txt_extension: '.txt', }
+    extensions = {
+        html_extension: '.html',
+        json_extension: '.json',
+        txt_extension: '.txt',
+    }
+    extensions_accepted = [ext for ext in extensions ]
+    extensions_regex = '|'.join([e for e in extensions_accepted])
+    
     object_list = 'object_list'
     object_fields = 'fields'
+    meta_accepted = ['ManyToManyField', ]
+    csrftoken_label = 'csrftoken'
 
     charset = 'utf-8'
     contenttype_html = 'text/html'
@@ -43,29 +58,28 @@ class OverConfig(object):
     contenttype_js = 'application/javascript'
     contenttype_json = 'application/json'
 
-    vn_method = _('authentication method')
-    vpn_method = _('authentication methods')
-    vn_task = _('# Task')
-    vpn_task = _('# Tasks')
-
     vsignup = True
     vsignin = True
     vsignout = True
     vprofile = True
     vprofilelist = True
 
-    vuser_absolute = 'authenta:Profile'
-    vmethod_absolute = 'authenta:MethodDetail'
-    vtask_absolute = 'authenta:TaskDetail'
+    vuser_absolute = '{}:Profile'.format(namespace)
+    vmethod_absolute = '{}:MethodDetail'.format(namespace)
+    vtask_absolute = '{}:TaskDetail'.format(namespace)
 
     viewregister_accepted = ['signup', 'register']
     viewlogin_accepted = ['signin', 'login']
     viewlogout_accepted = ['signout', 'logout']
-    extensions_accepted = [ext for ext in extensions ]
+    viewregister_regex = '|'.join([r for r in viewregister_accepted])
+    viewlogin_regex = '|'.join([r for r in viewlogin_accepted])
+    viewlogout_regex = '|'.join([r for r in viewlogout_accepted])
 
-    template_login = 'authenta/admin/login.html'
-    template_changelist = 'authenta/admin/change_list_method.html'
-    template_generatecache = 'authenta/admin/generate_cache.html'
+
+    template_login_admin = 'authenta/admin/login.html'
+    template_method_admin_changelist = 'authenta/admin/change_list_method.html'
+    template_detail = 'authenta/method/detail.html'
+    template_form = 'authenta/form.html'
 
     template_txt = '{}:{}'
     separator_txt = ' // '
@@ -73,8 +87,6 @@ class OverConfig(object):
     manyseparator_txt = ' && '
     subtemplate_txt = '{}={}'
     subseparator_txt = ';;'
-
-    cache_methods = 'methods.json'
 
     mail_activation = False
     mail_from = 'from@example.com'
@@ -91,11 +103,23 @@ class OverConfig(object):
     isstaffdefault = False
     adminnone = (None, {'fields': ('username', 'password')})
     adminpersonnal = (_('Personal info'), {'fields': ('email', 'first_name', 'last_name')})
-    choices_method = (('CREATESUPERUSER', _('Create Super User')),('BACKEND', _('Back-end')),('FRONTEND', _('Front-end')), ('ADDITIONAL', _('Additional method')))
+    choices_method = (
+        ('CREATESUPERUSER', _('Create Super User')),
+        ('BACKEND', _('Back-end')),
+        ('FRONTEND', _('Front-end')),
+        ('ADDITIONAL', _('Additional method'))
+    )
     additional_methods = []
     admin_override = False
 
-    status = (('error', _('In error')), ('order', _('Ordered')), ('ready', _('Ready')), ('start', _('Started')), ('running', _('Running')), ('complete', _('Complete')), )
+    status = (
+        ('error', _('In error')),
+        ('order', _('Ordered')),
+        ('ready', _('Ready')),
+        ('start', _('Started')),
+        ('running', _('Running')),
+        ('complete', _('Complete')),
+    )
     tasks = (
         ('check_os',        _('check(OS)')),
         ('purge_tasks',  _('Purge tasks')),
@@ -110,21 +134,13 @@ class OverConfig(object):
     purge = {
         'purge_tasks': {'by': 1000, 'day': 30 },
     }
+
     ldap_activated = True
     choices_ldapscope = (('SCOPE_BASE', 'base (scope=base)'), ('SCOPE_ONELEVEL', 'onelevel (scope=onelevel)'), ('SCOPE_SUBTREE', 'subtree (scope=subtree)'))
     choices_ldapversion = (('VERSION2', 'Version 2 (LDAPv2)'), ('VERSION3', 'Version 3 (LDAPv3)'))
     dir_ldapcerts = os.path.dirname(os.path.realpath(__file__))+'/ldapcerts'
 
     facebook_activated = False
-
-    def get_regexarray(attribute):
-        return '|'.join([r for r in getattr(AuthentaConfig, attribute)])
-
-    def getRegTask():
-        return '|'.join([v[0] for v in AuthentaConfig.tasks])
-
-    def getRegExt():
-        return '|'.join([e for e in AuthentaConfig.extensions_accepted])
 
     def encryptionKey():
         operatsys = os.uname()
@@ -175,7 +191,7 @@ class AuthentaConfig(AppConfig, OverConfig):
             setattr(self, 'contenttype_{}'.format(k), '{}; charset={}'.format(getattr(AuthentaConfig, 'contenttype_{}'.format(k)), AuthentaConfig.charset))
 
         class AuthentaAdminSite(admin.AdminSite):
-            login_template = AuthentaConfig.template_login
+            login_template = AuthentaConfig.template_login_admin
             site_header = AuthentaConfig.site_header
             index_title = AuthentaConfig.index_title
 
