@@ -12,26 +12,26 @@ from django.core.urlresolvers import reverse
 from .models import User as CustomUser
 from .models import Group as CustomGroup
 from .models import Method, Task
-from .apps import AuthentaConfig
+from .apps import AuthentaConfig as conf
 
 import unicodedata
 
 class UsernameField(forms.CharField):
     def to_python(self, value):
         username = super(UsernameField, self).to_python(value)
-        return username if AuthentaConfig.uniqidentity != 'username' and username is None and AuthentaConfig.usernamenull is True else unicodedata.normalize('NFKC', username) 
+        return username if conf.uniqidentity != 'username' and username is None and conf.usernamenull is True else unicodedata.normalize('NFKC', username) 
 UserChangeForm._meta.field_classes['username'] = UsernameField
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    list_display = (AuthentaConfig.uniqidentity, 'is_active', 'is_staff', 'date_joined')
+    list_display = (conf.uniqidentity, 'is_active', 'is_staff', 'date_joined')
     filter_horizontal = ('groups', 'user_permissions', 'additional_method',)
     readonly_fields = ('date_joined', 'date_update', 'update_by')
-    add_fieldsets = (( None, { 'fields': (AuthentaConfig.uniqidentity, AuthentaConfig.requiredfields, 'password1', 'password2') }),)
-    fieldsets = [AuthentaConfig.adminnone, AuthentaConfig.adminpersonnal]
+    add_fieldsets = (( None, { 'fields': (conf.uniqidentity, conf.requiredfields, 'password1', 'password2') }),)
+    fieldsets = [conf.adminnone, conf.adminpersonnal]
     fieldsets = (
-       (AuthentaConfig.adminnone),
-       (AuthentaConfig.adminpersonnal),
+       (conf.adminnone),
+       (conf.adminpersonnal),
        (_('Authentication method'), {'fields': ('authentication_method', 'additional_method')}),
        (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
@@ -40,7 +40,7 @@ class CustomUserAdmin(UserAdmin):
 
     def save_model(self, request, obj, form, change):
         if obj.authentication_method is None: obj.authentication_method = 'BACKEND'
-        obj.update_by = getattr(request.user, AuthentaConfig.uniqidentity)
+        obj.update_by = getattr(request.user, conf.uniqidentity)
         super(CustomUserAdmin, self).save_model(request, obj, form, change)
 
 admin.site.unregister(Group)
@@ -58,7 +58,7 @@ error_status.boolean = True
 
 @admin.register(Method)
 class MethodAdmin(admin.ModelAdmin):
-    change_list_template = AuthentaConfig.template_method_admin_changelist
+    change_list_template = conf.template_method_admin_changelist
     form = MethodAdminForm
     fieldsets = ((_('Globals'), { 'fields': ('method', 'name', 'status'), }),)
     filter_horizontal = ('groups', 'permissions')
@@ -66,7 +66,7 @@ class MethodAdmin(admin.ModelAdmin):
     list_filter = ('method', 'status',)
     search_fields = ('name',)
     readonly_fields = ('update_by', 'date_create', 'date_update', 'error')
-    if AuthentaConfig.ldap_activated:
+    if conf.ldap_activated:
         fieldsets += ((_('LDAP method'), {
             'classes': ('collapse',),
             'fields': ('ldap_host', 'ldap_port', 'ldap_tls', 'ldap_cert', 'ldap_define', 'ldap_scope', 'ldap_version', 'ldap_bind', 'ldap_password', 'ldap_user', 'ldap_search',),}),
@@ -81,7 +81,7 @@ class MethodAdmin(admin.ModelAdmin):
     )
 
     def save_model(self, request, obj, form, change):
-        obj.update_by = getattr(request.user, AuthentaConfig.uniqidentity)
+        obj.update_by = getattr(request.user, conf.uniqidentity)
         super(MethodAdmin, self).save_model(request, obj, form, change)
 
     actions = ['checkAuthentications']
@@ -103,5 +103,5 @@ class TaskAdmin(admin.ModelAdmin):
     list_display = ( '__str__', 'info', 'status', 'date_update', )
 
     def save_model(self, request, obj, form, change):
-        obj.update_by = getattr(request.user, AuthentaConfig.uniqidentity)
+        obj.update_by = getattr(request.user, conf.uniqidentity)
         super(TaskAdmin, self).save_model(request, obj, form, change)

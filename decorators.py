@@ -1,5 +1,5 @@
 from django.http import HttpResponseForbidden
-from .apps import AuthentaConfig
+from .apps import AuthentaConfig as  conf
 
 def howtoaccess(authorized=None):
     def _howtoaccess(view_func):
@@ -11,13 +11,13 @@ def howtoaccess(authorized=None):
             if 'is_superuser' in authorized and request.user.is_superuser:
                 return view_func(request, *args, **kwargs)
             if request.META['HTTP_HOST'] in authorized:
-                setattr(request.user, AuthentaConfig.uniqidentity, AuthentaConfig.localcallname)
+                setattr(request.user, conf.uniqidentity, conf.localcallname)
                 return view_func(request, *args, **kwargs)
             if request.META['HTTP_X_REAL_IP'] in authorized:
-                setattr(request.user, AuthentaConfig.uniqidentity, AuthentaConfig.localcallname)
+                setattr(request.user, conf.uniqidentity, conf.localcallname)
                 return view_func(request, *args, **kwargs)
             if request.META[ 'HTTP_X_FORWARDED_FOR'] in authorized:
-                setattr(request.user, AuthentaConfig.uniqidentity, AuthentaConfig.localcallname)
+                setattr(request.user, conf.uniqidentity, conf.localcallname)
                 return view_func(request, *args, **kwargs)
             return HttpResponseForbidden()
         return _wrapped_view

@@ -9,9 +9,9 @@ from django.template.loader import get_template
 from django.template import Context
 
 from .manager import UserManager
-from .apps import AuthentaConfig, logmethis
+from .apps import (AuthentaConfig as conf, logmethis)
 
-if AuthentaConfig.ldap_activated: from .methods.ldap import methodLDAP
+if conf.ldap_activated: from .methods.ldap import methodLDAP
 
 import unicodedata
 
@@ -30,10 +30,10 @@ class Group(Group):
         verbose_name_plural = _('groups')
 
 def ldap_certsdir(instance, filename):
-    return '{}/{}'.format(AuthentaConfig.dir_ldapcerts, instance.name)
+    return '{}/{}'.format(conf.dir_ldapcerts, instance.name)
 
 class Method(Update):
-    method = models.CharField(_('Method'), choices=AuthentaConfig.additional_methods, default='LDAP', help_text=_('Authentication type'), max_length=4)
+    method = models.CharField(_('Method'), choices=conf.additional_methods, default='LDAP', help_text=_('Authentication type'), max_length=4)
     name = models.CharField(_('Authentication Name'), help_text=_('Naming your authentication'), max_length=254)
     status = models.BooleanField(_('Activated'), default=True, help_text=_('Authentication enable or disable'))
     is_active = models.BooleanField(_('Active'), default=True)
@@ -70,23 +70,23 @@ class Method(Update):
     ldap_tls = models.BooleanField(vn_ldaptls, default=False, help_text=ht_ldaptls)
     ldap_cert = models.FileField(vn_ldapcert, blank=True, help_text=ht_ldapcert, null=True, upload_to=ldap_certsdir)
     ldap_define = models.CharField(vn_ldapdefine, blank=True, help_text=ht_ldapdefine, max_length=254, null=True)
-    ldap_scope = models.CharField(vn_ldapscope, choices=AuthentaConfig.choices_ldapscope, default='SCOPE_BASE', help_text=ht_ldapscope, max_length=14)
-    ldap_version = models.CharField(ht_ldapversion, choices=AuthentaConfig.choices_ldapversion, default='VERSION3', help_text=ht_ldapversion, max_length=8)
+    ldap_scope = models.CharField(vn_ldapscope, choices=conf.choices_ldapscope, default='SCOPE_BASE', help_text=ht_ldapscope, max_length=14)
+    ldap_version = models.CharField(ht_ldapversion, choices=conf.choices_ldapversion, default='VERSION3', help_text=ht_ldapversion, max_length=8)
     ldap_bind = models.CharField(vn_ldapbind, blank=True, help_text=ht_ldapbind, max_length=254, null=True)
     ldap_password = models.CharField(vn_ldappassword, blank=True, help_text=ht_ldappassword, max_length=254, null=True)
     ldap_user = models.TextField(vn_ldapuser, blank=True, help_text=ht_ldapuser, null=True)
     ldap_search = models.TextField(nv_ldapsearch, help_text=ht_ldapsearch, blank=True, null=True)
 
     class Meta:
-        verbose_name = AuthentaConfig.vn_method
-        verbose_name_plural = AuthentaConfig.vpn_method
+        verbose_name = conf.vn_method
+        verbose_name_plural = conf.vpn_method
 
     def __str__(self):
         return '%s | %s' % (self.method, self.name)
 
     @models.permalink
     def get_absolute_url(self):
-        return AuthentaConfig.vmethod_absolute, (), {'pk': self.id }
+        return conf.vmethod_absolute, (), {'pk': self.id }
 
     def get(self, *args, **kwargs):
         logmethis(7, 'get=%s, method=%s' % (self.name, self.method))
@@ -105,21 +105,21 @@ class Method(Update):
         return True
 
 class User(AbstractUser):
-    username = models.CharField(_('Username'), blank=AuthentaConfig.usernamenull, max_length=254, null=AuthentaConfig.usernamenull, unique=AuthentaConfig.usernameuniq, validators=[AbstractUser.username_validator],)
-    email = models.EmailField(_('Email address'), blank=AuthentaConfig.emailnull, null=AuthentaConfig.emailnull, unique=AuthentaConfig.emailuniq)
-    is_active = models.BooleanField(_('Active'), default=AuthentaConfig.isactivedefault)
-    is_staff = models.BooleanField(_('Staff'), default=AuthentaConfig.isstaffdefault)
-    first_name = models.CharField(_('First name'), blank=AuthentaConfig.firstnamenull, max_length=30, null=AuthentaConfig.firstnamenull)
-    last_name = models.CharField(_('Last name'), blank=AuthentaConfig.lastnamenull, max_length=30, null=AuthentaConfig.lastnamenull)
+    username = models.CharField(_('Username'), blank=conf.usernamenull, max_length=254, null=conf.usernamenull, unique=conf.usernameuniq, validators=[AbstractUser.username_validator],)
+    email = models.EmailField(_('Email address'), blank=conf.emailnull, null=conf.emailnull, unique=conf.emailuniq)
+    is_active = models.BooleanField(_('Active'), default=conf.isactivedefault)
+    is_staff = models.BooleanField(_('Staff'), default=conf.isstaffdefault)
+    first_name = models.CharField(_('First name'), blank=conf.firstnamenull, max_length=30, null=conf.firstnamenull)
+    last_name = models.CharField(_('Last name'), blank=conf.lastnamenull, max_length=30, null=conf.lastnamenull)
     date_joined = models.DateTimeField(_('Date joined'), auto_now_add=True, editable=False)
     date_update = models.DateTimeField(_('Last modification date'), auto_now=True, editable=False)
     update_by = models.CharField(_('Update by'), editable=False, max_length=254)
-    authentication_method = models.CharField(_('Authentication method'), choices=AuthentaConfig.choices_method, default='FRONTEND', max_length=15)
+    authentication_method = models.CharField(_('Authentication method'), choices=conf.choices_method, default='FRONTEND', max_length=15)
     additional_method = models.ManyToManyField(Method, blank=True)
 
     objects = UserManager()
-    USERNAME_FIELD = AuthentaConfig.uniqidentity
-    REQUIRED_FIELDS = AuthentaConfig.requiredfields
+    USERNAME_FIELD = conf.uniqidentity
+    REQUIRED_FIELDS = conf.requiredfields
 
     class Meta:
         verbose_name = _('user')
@@ -127,44 +127,44 @@ class User(AbstractUser):
 
     def clean(self):
         super(AbstractUser, self).clean()
-        if 'username' in AuthentaConfig.requiredfields or self.username is not None:
+        if 'username' in conf.requiredfields or self.username is not None:
             self.username = unicodedata.normalize('NFKC', self.username) 
         self.email = self.__class__.objects.normalize_email(self.email)
 
     def get_absolute_url(self):
-        return reverse(AuthentaConfig.vuser_absolute, args=[str(self.id), AuthentaConfig.vextension])
+        return reverse(conf.vuser_absolute, args=[str(self.id), conf.vextension])
 
     def sendMail(self, subject, tpl_html, tpl_txt):
         htmly     = get_template(tpl_html)
         plaintext = get_template(tpl_txt)
         d = Context(self)
-        subject, from_email, to = subject, AuthentaConfig.mail_from, self.email
+        subject, from_email, to = subject, conf.mail_from, self.email
         text_content = plaintext.render(d)
         html_content = htmly.render(d)
         msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
-        msg.attach_alternative(html_content, AuthentaConfig.contenttype_html)
+        msg.attach_alternative(html_content, conf.contenttype_html)
         msg.send()
 
 from datetime import datetime, timedelta
 import json, subprocess, sys, urllib.parse
 class Task(Update):
-    task = models.CharField(_('Task'), max_length=254, choices=AuthentaConfig.tasks, help_text=_('Task to be done'))
+    task = models.CharField(_('Task'), max_length=254, choices=conf.tasks, help_text=_('Task to be done'))
     info = models.TextField(_('Information about the task'), blank=True, null=True, help_text=_('More informations'))
-    status = models.CharField(_('Status'), max_length=8, choices=AuthentaConfig.status, default='order', help_text=_('Can be: {}'.format(', '.join([s[0] for s in AuthentaConfig.status]))))
+    status = models.CharField(_('Status'), max_length=8, choices=conf.status, default='order', help_text=_('Can be: {}'.format(', '.join([s[0] for s in conf.status]))))
 
     class Meta:
-        verbose_name        = AuthentaConfig.vn_task
-        verbose_name_plural = AuthentaConfig.vpn_task
+        verbose_name        = conf.vn_task
+        verbose_name_plural = conf.vpn_task
 
     def __str__(self):
         return self.get_task_display()
 
     @models.permalink
     def get_absolute_url(self):
-        return AuthentaConfig.vtask_absolute, (), {'pk': self.id, 'extension': AuthentaConfig.html_extension}
+        return conf.vtask_absolute, (), {'pk': self.id, 'extension': conf.html_extension}
 
     #def get_absolute_url(self):
-    #    return reverse(AuthentaConfig.vtask_absolute, args=[str(self.id), AuthentaConfig.vextension])
+    #    return reverse(conf.vtask_absolute, args=[str(self.id), conf.vextension])
 
     def failed(self, error):
         logmethis(5, 'error=%s' % str(error))
@@ -185,12 +185,12 @@ class Task(Update):
     def check_task(self):
         if self.status == 'order':
             check = '{0} {1}/{2}{3} {5}'.format(
-                AuthentaConfig.binary,
-                AuthentaConfig.dir_task,
-                AuthentaConfig.tasks[0][0], 
-                AuthentaConfig.binary_ext,
+                conf.binary,
+                conf.dir_task,
+                conf.tasks[0][0], 
+                conf.binary_ext,
                 self.task,
-                AuthentaConfig.killscript)
+                conf.killscript)
             try: 
                 subprocess.check_call(check, shell=True)
                 self.status = 'ready'
@@ -204,13 +204,13 @@ class Task(Update):
     def start_task(self):
         if self.check_task():
             bgtask = '{0} {1} {2}/{3}{4} {5} {6}'.format(
-                AuthentaConfig.python_start,
-                AuthentaConfig.python,
-                AuthentaConfig.dir_task,
+                conf.python_start,
+                conf.python,
+                conf.dir_task,
                 self.task,
-                AuthentaConfig.python_ext,
+                conf.python_ext,
                 self.id,
-                AuthentaConfig.python_end)
+                conf.python_end)
             logmethis(1, bgtask)
             try:
                 subprocess.check_call(bgtask, shell=True)

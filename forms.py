@@ -3,16 +3,16 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, User
 from django.contrib.auth import password_validation
 from django.utils.translation import ugettext_lazy as _
 
-from .apps import AuthentaConfig, logmethis
+from .apps import (AuthentaConfig as conf, logmethis)
 from .models import User, Method
 
-if AuthentaConfig.vsignup:
+if conf.vsignup:
     class SignUpForm(UserCreationForm):
         class Meta:
             model = User
-            fields = (AuthentaConfig.uniqidentity, ) + tuple(AuthentaConfig.requiredfields) + ('password1', 'password2')
+            fields = (conf.uniqidentity, ) + tuple(conf.requiredfields) + ('password1', 'password2')
 
-if AuthentaConfig.ldap_activated:
+if conf.ldap_activated:
     class LDAPAuthenticationForm(AuthenticationForm):
         username = UsernameField(
             label=_('LDAP Login'),

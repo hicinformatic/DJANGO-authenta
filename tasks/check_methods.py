@@ -29,6 +29,7 @@ with urllib.request.urlopen(task.getUrl(methods)) as url:
         try:
             curl = urllib.request.Request(checkurl, data=data)
             curl = base.open(curl)
+            print(curl.read())
             infos[method['id']]['status'] = curl.getcode()
         except Exception as e:
             infos[method['id']]['error'] = str(e)
