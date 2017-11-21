@@ -174,12 +174,13 @@ class TaskCreate(HybridResponseMixin, CreateView):
     template_name = 'authenta/form.html'
     is_form = True
     has_token = True
+    zero_flat = True
 
     def get_context_data(self, **kwargs):
         context = super(TaskCreate, self).get_context_data(**kwargs)
         context['fields'] = self.fields
         if self.kwargs['extension'] != 'html':
-            context['object_list'] = [objectDict({ field: context['form'][field].help_text for field in context['fields']})]
+            context['object_list'] = [objectDict({ field: context['form'][field].help_text for field in context['fields']}).addToken()]
         return context
 
     def get_success_url(self):

@@ -41,6 +41,7 @@ class OverConfig(object):
     contenttype_txt = 'text/plain'
     contenttype_svg = 'image/svg+xml'
     contenttype_js = 'application/javascript'
+    contenttype_json = 'application/json'
 
     vn_method = _('authentication method')
     vpn_method = _('authentication methods')
@@ -170,7 +171,8 @@ class AuthentaConfig(AppConfig, OverConfig):
         from django.urls import reverse
         from django.conf.urls import url
         
-        self.contenttype_txt = '{}; charset={}'.format(AuthentaConfig.contenttype_txt, AuthentaConfig.charset)
+        for k in self.extensions:
+            setattr(self, 'contenttype_{}'.format(k), '{}; charset={}'.format(getattr(AuthentaConfig, 'contenttype_{}'.format(k)), AuthentaConfig.charset))
 
         class AuthentaAdminSite(admin.AdminSite):
             login_template = AuthentaConfig.template_login
