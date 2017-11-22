@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.middleware.csrf import get_token
-from .apps import AuthentaConfig as conf
+from .apps import (AuthentaConfig as conf, logmethis as log)
 
 class objectDict(object):
     def __init__(self, d):
@@ -14,7 +14,7 @@ class objectDict(object):
         def get_internal_type(self):
             return None
 
-class HybridResponseMixin:
+class HybridResponseMixin(object):
     is_form = False
     has_token = False
     zero_flat = False
