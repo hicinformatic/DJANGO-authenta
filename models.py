@@ -9,7 +9,7 @@ from django.template.loader import get_template
 from django.template import Context
 
 from .manager import UserManager
-from .apps import (AuthentaConfig as conf, logmethis)
+from .apps import (AuthentaConfig as conf, l)
 
 if conf.ldap_activated: from .methods.ldap import methodLDAP
 
