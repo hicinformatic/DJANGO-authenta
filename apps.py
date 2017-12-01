@@ -5,6 +5,9 @@ from django.conf import settings
 import datetime, syslog, os, hashlib, sys
 
 class OverConfig(object):
+    fieldsets = ((_('Logs'), { 'classes': ('wide',), 'fields': ('update_by', 'date_create', 'date_update', 'error', ),}),)
+    readonly_fields = ('update_by', 'date_create', 'date_update', 'error')
+
     def __init__(self):
         if hasattr(settings, self.settings_override):
             settings_class = getattr(settings, self.settings_override)
@@ -39,7 +42,15 @@ class Config(OverConfig):
         vn_task = _('# Task')
         vpn_task = _('# Tasks')
         logger = 'logger_{}'
-        
+        hybrid_list = 'object_list' 
+        hybrid_fields = 'fields'
+        meta = '_meta'
+        meta_accepted = ['ManyToManyField', ]
+        template_detail = 'authenta/detail.html'
+        template_form = 'authenta/form.html'
+        form = 'form'
+        form_token = 'token'
+
 #██╗      ██████╗  ██████╗ 
 #██║     ██╔═══██╗██╔════╝ 
 #██║     ██║   ██║██║  ███╗
@@ -51,7 +62,29 @@ class Config(OverConfig):
         log_level = 7
         format_syslog = '[{}] {}'
         format_file = '{}:{}:{}.{} - {} | [{}] {}\n'
+        format_console = '{}{}:{}:{}.{} - {} | [{}] {}{}'
+        format_code = '{}_code'
+        format_color = '{}_color'
+        file_open_method = 'a'
         name_file = '{}/{}_{}_{}_{}.log'
+        default_color = '\033[0m'
+        emerg_code = 0
+        emerg_color = '\033[1;93;5;101m'
+        alert_code = 1
+        alert_color = '\033[1;30;5;105m'
+        crit_code = 2
+        crit_color = '\033[1;97;5;101m'
+        error_code = 3
+        error_color = '\033[1;91;5;107m'
+        warning_code = 4
+        warning_color = '\033[0;91m'
+        notice_code = 5
+        notice_color = '\033[0;97m'
+        info_code = 6
+        info_color = '\033[0;94m'
+        debug_code = 7
+        debug_color = '\033[0;30;5;100m'
+        
 
 #███████╗██╗  ██╗████████╗███████╗███╗   ██╗███████╗██╗ ██████╗ ███╗   ██╗
 #██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝████╗  ██║██╔════╝██║██╔═══██╗████╗  ██║
@@ -61,14 +94,16 @@ class Config(OverConfig):
 #╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝
     class Extension(OverConfig):
         html = '.html'
+        js = '.js'
         json = '.json'
-        text = '.txt'
+        txt = '.txt'
         csv = '.csv'
-        javascript = '.js'
         encrypted = '.enc'
         shell = '.sh'
         batch = '.bat'
-        authorized = ['html', 'json', 'text', 'csv']
+        authorized = ['html', 'js', 'json', 'txt', 'csv']
+        kwarg_extension = 'extension'
+        default_extension = 'html'
 
 # ██████╗ ██████╗ ███╗   ██╗████████╗███████╗███╗   ██╗████████╗████████╗██╗   ██╗██████╗ ███████╗
 #██╔════╝██╔═══██╗████╗  ██║╚══██╔══╝██╔════╝████╗  ██║╚══██╔══╝╚══██╔══╝╚██╗ ██╔╝██╔══██╗██╔════╝
@@ -79,10 +114,20 @@ class Config(OverConfig):
     class ContentType(OverConfig):
         charset = 'utf-8'
         html = 'text/html'
+        js = 'application/javascript'
         json = 'application/json'
-        text = 'text/plain'
+        txt = 'text/plain'
         csv = 'text/csv'
-        javascript = 'application/javascript'
+        xml = 'application/xml'
+        csv_related_template = '[ {} ]'
+        csv_related_join = ','
+        txt_detail_template = '{}:{}'
+        txt_detail_separator = ' // '
+        txt_related_template = '{}:[ {} ]'
+        txt_related_separator = ' && '
+        txt_related_subtemplate = '{}={}'
+        txt_related_subseparator = ';;'
+
 
 # █████╗ ██████╗ ███╗   ███╗██╗███╗   ██╗
 #██╔══██╗██╔══██╗████╗ ████║██║████╗  ██║
@@ -104,7 +149,6 @@ class Config(OverConfig):
 #╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝
     class Regex(OverConfig):
         extension = None
-
 
     class Group(OverConfig):
         list_display = None
@@ -137,7 +181,7 @@ class Config(OverConfig):
         method_backend = 'BACKEND'
         method_frontend = 'FRONTEND'
         method_additional = 'ADDITIONAL'
-        choices_method = (
+        choices_user_create_method = (
             (method_createsuperuser, _('Create Super User')),
             (method_backend, _('Back-end')),
             (method_frontend, _('Front-end')),
@@ -151,6 +195,7 @@ class Config(OverConfig):
         field_is_superuser = 'is_superuser'
         field_is_active = 'is_active'
         field_is_staff = 'is_staff'
+        field_is_authenticated = 'is_authenticated'
         field_method = 'method'
         normalize = 'NFKC'
         verbose_name = _('user')
@@ -178,9 +223,38 @@ class Config(OverConfig):
             (_('Log informations'), {'fields': ('date_update', 'update_by')}),
         )
 
+#███╗   ███╗███████╗████████╗██╗  ██╗ ██████╗ ██████╗ 
+#████╗ ████║██╔════╝╚══██╔══╝██║  ██║██╔═══██╗██╔══██╗
+#██╔████╔██║█████╗     ██║   ███████║██║   ██║██║  ██║
+#██║╚██╔╝██║██╔══╝     ██║   ██╔══██║██║   ██║██║  ██║
+#██║ ╚═╝ ██║███████╗   ██║   ██║  ██║╚██████╔╝██████╔╝
+#╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝  
     class Method(OverConfig):
         verbose_name = _('Method')
         verbose_name_plural = _('Methods')
+        choices = ()
+        default = 'LDAP'
+        vn_method = _('Method')
+        vn_name = _('Name')
+        vn_enable = _('Enable')
+        vn_is_active = _('Will be active')
+        vn_is_staff = _('Will be staff')
+        vn_superuser = _('Will be superuser')
+        vn_groups = _('Groups associated')
+        vn_permissions = _('Permissions associated')
+        ht_method = _('Authentication type')
+        ht_name = _('Authentication Name')
+        ht_enable = _('Authentication enable or disable')
+        fieldsets = ((_('Globals'), { 'fields': ('method', 'name', 'enable', ), }),)
+        fieldsets += ((_('Groups and permissions'), { 'classes': ('wide',), 'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'permissions' ),}),)
+        fieldsets += OverConfig.fieldsets
+        filter_horizontal = ('groups', 'permissions')
+        list_display = ('name', 'method', 'enable', 'is_active', 'is_staff', 'is_superuser', 'status')
+        list_filter = ('method', 'enable',)
+        search_fields = ('name',)
+        readonly_fields = OverConfig.readonly_fields
+        method_accepted = ['ldap',]
+
 
 #██╗     ██████╗  █████╗ ██████╗ 
 #██║     ██╔══██╗██╔══██╗██╔══██╗
@@ -189,6 +263,9 @@ class Config(OverConfig):
 #███████╗██████╔╝██║  ██║██║     
 #╚══════╝╚═════╝ ╚═╝  ╚═╝╚═╝
     class ldap(OverConfig):
+        activate = True
+        name = 'LDAP'
+        option = _('LDAP')
         host = 'localhost'
         port = 389
         scope = 'SCOPE_BASE'
@@ -196,6 +273,9 @@ class Config(OverConfig):
         choices_scope = (('SCOPE_BASE', 'base (scope=base)'), ('SCOPE_ONELEVEL', 'onelevel (scope=onelevel)'), ('SCOPE_SUBTREE', 'subtree (scope=subtree)'))
         choices_version = (('VERSION2', 'Version 2 (LDAPv2)'), ('VERSION3', 'Version 3 (LDAPv3)'))
         certificates = '{}/{}'
+        fieldsets = ((_('LDAP method'), {
+            'classes': ('collapse',),
+            'fields': ('ldap_host', 'ldap_port', 'ldap_tls', 'ldap_cert', 'ldap_define', 'ldap_scope', 'ldap_version', 'ldap_bind', 'ldap_password', 'ldap_user', 'ldap_search',),}),)
         vn_ldap_host = _('Use hostname or IP address')
         vn_ldap_port = _('Port')
         vn_ldap_tls = _('Option TLS')
@@ -222,6 +302,12 @@ class Config(OverConfig):
         def dir_cert(instance, filename):
             return self.certificates.format(conf.dir_cert, instance.name)
 
+#████████╗ █████╗ ███████╗██╗  ██╗
+#╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
+#   ██║   ███████║███████╗█████╔╝ 
+#   ██║   ██╔══██║╚════██║██╔═██╗ 
+#   ██║   ██║  ██║███████║██║  ██╗
+#   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
     class Task(OverConfig):
         verbose_name = _('# Task')
         verbose_name_plural = _('# Tasks')
@@ -239,23 +325,31 @@ class Config(OverConfig):
             (status_running, _('Running')),
             (status_complete, _('Complete')),
         )
-        script_can_start = 'can_start'
+        script_can_run = 'check_os'
         script_tasks = (
             ('purge_tasks',  _('Purge tasks')),
             ('check_methods',  _('Check methods')),
             ('cache_methods',  _('Generate cache')),
         )
+        list_display = ('task', 'status')
+        fieldsets = ((_('Globals'), { 'fields': ('task', 'info', 'error', 'command', 'local_check'), }),)
+        fieldsets += OverConfig.fieldsets
+        readonly_fields = OverConfig.readonly_fields
+        readonly_fields += ('command', 'local_check')
         vn_task = _('Task')
         vn_info = _('More informations')
         vn_status = _('Status')
         vn_commmand = _('Command')
+        vn_local_check = _('Local check')
         ht_task = _('Task to be done')
         ht_info = _('Information about the task')
         ht_status = _('Can be: {}'.format(', '.join([s[0] for s in status])))
-        ht_commmand = _('Command used')
-
+        ht_commmand = _('Command used to run the script')
+        ht_local_check = _('Local check for not duplicate the task')
+        error_not_order = _('Not ordered, check status')
+        error_not_ready = _('Not ready, check status')
         binary = '/bin/bash'
-        binary_extension = '.sh'
+        script_can_run_extension = '.sh'
         background =  '/bin/nohup'
         background_end = '&'
         python = '/bin/python3.6'
@@ -265,17 +359,34 @@ class Config(OverConfig):
         ip_authorized = ['127.0.0.1',]
         django_port = 8000
         update_by_local = 'local_robot'
+        template_command = '{background} {python} {directory}/{task}{extension} {id} {background_end}'
+        template_local_check = '{binary} {directory}/{script}{script_extension} {task} {timeout} {id}'
+        fields_detail = ['task', 'info', 'status', 'error']
+        fields_create = ['task', 'info']
+        fields_update = ['task', 'status', 'info', 'error']
+        view_absolute = '{}:TaskDetail'
 
 class AuthentaConfig(AppConfig, Config):
     name = 'authenta'
 
     def ready(self):
+        self.logger('info', 'log level: {}'.format(self.Log.log_level))
         if self.User.add_fieldsets is None:
             self.User.list_display = (self.User.unique_identity, 'is_active', 'is_staff', 'date_joined')
+        self.logger('debug', 'User list display: {}'.format(self.User.list_display))
         if self.User.add_fieldsets is None:
             self.User.add_fieldsets = (( None, { 'fields': (self.User.unique_identity, self.User.required_fields, 'password1', 'password2') }),)
+        self.logger('debug', 'User add field: {}'.format(self.User.add_fieldsets))
         if self.Regex.extension is None:
             self.Regex.extension = '|'.join([ext for ext in self.Extension.authorized])
+        self.logger('debug', 'Regex extensions: {}'.format(self.Regex.extension))
+        for method in self.Method.method_accepted:
+            if getattr(self, method).activate is True:
+                self.Method.choices += ((getattr(self, method).name, getattr(self, method).option),)
+                self.Method.fieldsets += getattr(self, method).fieldsets
+        self.logger('debug', 'Choices method: {}'.format(self.Method.choices))
+        self.Task.view_absolute = self.Task.view_absolute.format(self.App.namespace)
+
 
 #██╗      ██████╗  ██████╗  ██████╗ ███████╗██████╗ 
 #██║     ██╔═══██╗██╔════╝ ██╔════╝ ██╔════╝██╔══██╗
@@ -283,21 +394,36 @@ class AuthentaConfig(AppConfig, Config):
 #██║     ██║   ██║██║   ██║██║   ██║██╔══╝  ██╔══██╗
 #███████╗╚██████╔╝╚██████╔╝╚██████╔╝███████╗██║  ██║
 #╚══════╝ ╚═════╝  ╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═╝
-    def logger(self, lvl, msg):
-        getattr(self, self.App.logger.format(self.Log.log_type))(lvl, msg)
+#0 	Emergency 	  emerg (panic)	 Système inutilisable.
+#1 	Alert 	      alert          Une intervention immédiate est nécessaire.
+#2 	Critical 	  crit 	         Erreur critique pour le système.
+#3 	Error 	      err (error) 	 Erreur de fonctionnement.
+#4 	Warning 	  warn (warning) Avertissement (une erreur peut intervenir si aucune action n'est prise).
+#5 	Notice 	      notice  	     Evénement normal méritant d'être signalé.
+#6 	Informational info 	         Pour information.
+#7 	Debugging 	  debug 	     Message de mise au point.
+    @staticmethod
+    def logger(lvl, msg):
+        code = getattr(AuthentaConfig.Log, AuthentaConfig.Log.format_code.format(lvl))
+        if code <= AuthentaConfig.Log.log_level:
+            getattr(AuthentaConfig, AuthentaConfig.App.logger.format(AuthentaConfig.Log.log_type))(lvl, code, msg)
 
-    def logger_syslog(self, lvl, msg):
+    @staticmethod
+    def logger_syslog(lvl, code, msg):
         syslog.openlog(logoption=syslog.LOG_PID)
-        syslog.syslog(lvl, self.Log.format_syslog.format(self.name, msg))
+        syslog.syslog(code, AuthentaConfig.Log.format_syslog.format(AuthentaConfig.name, msg))
         syslog.closelog()
 
-    def logger_file(self, lvl, msg):
+    @staticmethod
+    def logger_file(lvl, code, msg):
         now = datetime.datetime.now()
-        logfile = self.Log.name_file.format(self.App.dir_logs, self.name, now.year, now.month, now.day)
-        log = open(logfile, 'a')
-        log.write(self.Log.format_file.format(now.hour, now.minute, now.second, now.microsecond, lvl, self.name, msg))
+        logfile = AuthentaConfig.Log.name_file.format(AuthentaConfig.App.dir_logs, AuthentaConfig.name, now.year, now.month, now.day)
+        log = open(logfile, AuthentaConfig.Log.file_open_method)
+        log.write(AuthentaConfig.Log.format_file.format(now.hour, now.minute, now.second, now.microsecond, lvl, AuthentaConfig.name, msg))
         log.close()
 
-    def logger_console(self, lvl, msg):
+    @staticmethod
+    def logger_console(lvl, code, msg):
+        color = getattr(AuthentaConfig.Log, AuthentaConfig.Log.format_color.format(lvl))
         now = datetime.datetime.now()
-        print(self.Log.format_file.format(now.hour, now.minute, now.second, now.microsecond, lvl, self.name, msg))
+        print(AuthentaConfig.Log.format_console.format(color, now.hour, now.minute, now.second, now.microsecond, lvl, AuthentaConfig.name, msg, AuthentaConfig.Log.default_color))

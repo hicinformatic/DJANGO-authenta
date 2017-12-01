@@ -12,6 +12,11 @@ mysite = AuthentaAdminSite()
 admin.site = mysite
 sites.site = mysite
 
+class StatusAdmin(admin.ModelAdmin):
+    def status(self, obj):
+        return obj.status()
+    status.boolean = True
+
 class OverAdmin(object):
     def save_model(self, request, obj, form, change):
         if hasattr(obj, conf.User.field_method) and obj.method is None:
@@ -36,10 +41,18 @@ class CustomGroup(OverAdmin, GroupAdmin):
     fieldsets = conf.Group.fieldsets
 
 @admin.register(Method)
-class MethodAdmin(OverAdmin, admin.ModelAdmin):
-    pass
+class MethodAdmin(OverAdmin, StatusAdmin):
+    fieldsets = conf.Method.fieldsets
+    filter_horizontal = conf.Method.filter_horizontal
+    list_display = conf.Method.list_display
+    list_filter = conf.Method.list_filter
+    search_fields = conf.Method.search_fields
+    readonly_fields = conf.Method.readonly_fields
 
 @admin.register(Task)
-class TaskAdmin(admin.ModelAdmin):
+class TaskAdmin(OverAdmin, StatusAdmin):
+    fieldsets = conf.Task.fieldsets
+    list_display = conf.Task.list_display
+    readonly_fields = conf.Task.readonly_fields
     pass
 

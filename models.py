@@ -7,6 +7,7 @@ from .apps import AuthentaConfig as conf
 from .manager import UserManager
 
 import unicodedata
+logger = conf.logger
 
 #██╗   ██╗██████╗ ██████╗  █████╗ ████████╗███████╗
 #██║   ██║██╔══██╗██╔══██╗██╔══██╗╚══██╔══╝██╔════╝
@@ -23,6 +24,9 @@ class Update(models.Model):
     class Meta:
         abstract = True
 
+    def status(self):
+        return True if self.error is None else False
+
 class Group(Group, Update):
     pass
 
@@ -33,6 +37,16 @@ class Group(Group, Update):
 #██║ ╚═╝ ██║███████╗   ██║   ██║  ██║╚██████╔╝██████╔╝
 #╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝
 class Method(Update):
+    conf_method = conf.Method
+    method = models.CharField(conf_method.vn_method, choices=conf_method.choices, default=conf_method.default, help_text=conf_method.ht_method, max_length=4)
+    name = models.CharField(conf_method.vn_name, help_text=conf_method.ht_name, max_length=254)
+    enable = models.BooleanField(conf_method.vn_enable, default=True, help_text=conf_method.ht_enable)
+    is_active = models.BooleanField(conf_method.vn_is_active, default=True)
+    is_staff = models.BooleanField(conf_method.vn_is_staff, default=False)
+    is_superuser = models.BooleanField(conf_method.vn_superuser, default=False)
+    groups = models.ManyToManyField(Group, verbose_name=conf_method.vn_groups, blank=True)
+    permissions = models.ManyToManyField(Permission, verbose_name=conf_method.vn_permissions, blank=True)
+
     conf_ldap = conf.ldap
     ldap_host = models.CharField(conf_ldap.vn_ldap_host, blank=True, default=conf_ldap.host, help_text=conf_ldap.ht_ldap_host, max_length=254, null=True)
     ldap_port = models.PositiveIntegerField(conf_ldap.vn_ldap_port, blank=True, default=conf_ldap.port, help_text=conf_ldap.ht_ldap_port, null=True, validators=[MinValueValidator(0), MaxValueValidator(65535)])
@@ -67,7 +81,7 @@ class User(AbstractUser):
     date_joined = models.DateTimeField(conf_user.vn_date_joined, auto_now_add=True, editable=False)
     date_update = models.DateTimeField(conf.App.vn_date_update, auto_now=True, editable=False)
     update_by = models.CharField(conf.App.vn_update_by, editable=False, max_length=254)
-    method = models.CharField(conf_user.vn_method, choices=conf_user.choices_method, default=conf_user.default_method, max_length=15)
+    method = models.CharField(conf_user.vn_method, choices=conf_user.choices_user_create_method, default=conf_user.default_method, max_length=15)
     additional = models.ManyToManyField(Method, blank=True)
 
     objects = UserManager()
@@ -84,11 +98,19 @@ class User(AbstractUser):
             self.username = unicodedata.normalize(self.conf_user.normalize, self.username) 
         self.email = self.__class__.objects.normalize_email(self.email)
 
+#████████╗ █████╗ ███████╗██╗  ██╗
+#╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
+#   ██║   ███████║███████╗█████╔╝ 
+#   ██║   ██╔══██║╚════██║██╔═██╗ 
+#   ██║   ██║  ██║███████║██║  ██╗
+#   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
 class Task(Update):
-    task = models.CharField(conf.Task.vn_task, max_length=254, choices=conf.Task.script_tasks, help_text=conf.Task.ht_task)
-    info = models.TextField(conf.Task.vn_info, blank=True, null=True, help_text=conf.Task.ht_info)
-    status = models.CharField(conf.Task.vn_status, max_length=8, choices=conf.Task.status, default=conf.Task.status_order, help_text=conf.Task.ht_status)
-    command = models.CharField(conf.Task.vn_commmand, max_length=254, blank=True, null=True, help_text=conf.Task.ht_commmand)
+    conf_task = conf.Task
+    task = models.CharField(conf_task.vn_task, max_length=254, choices=conf_task.script_tasks, help_text=conf_task.ht_task)
+    info = models.TextField(conf_task.vn_info, blank=True, null=True, help_text=conf_task.ht_info)
+    status = models.CharField(conf_task.vn_status, max_length=8, choices=conf_task.status, default=conf_task.status_order, help_text=conf_task.ht_status)
+    command = models.CharField(conf_task.vn_commmand, max_length=254, blank=True, null=True, help_text=conf_task.ht_commmand, editable=False)
+    local_check = models.CharField(conf_task.vn_local_check, max_length=254, blank=True, null=True, help_text=conf_task.ht_local_check, editable=False)
 
     class Meta:
         verbose_name        = conf.Task.verbose_name
@@ -98,19 +120,54 @@ class Task(Update):
         return self.get_task_display()
 
     def save(self, *args, **kwargs):
-        response = super(Task, self).save(*args, **kwargs)
         self.prepare()
-        return response
+        super(Task, self).save(*args, **kwargs)
+        logger('notice', 'local_check: {}'.format(self.local_check))
+        logger('notice', 'command: {}'.format(self.command))
 
-######################
     def prepare(self):
-        prepare = {
-            'background' : conf.Task.background,
-            'python' : conf.Task.python,
-            'directory' : conf.App.dir_task,
-            'task' : self.task,
-            'extension' : conf.Task.python_extension,
-            'id' : self.id,
-            'background_end' : conf.Task.background_end,
-        }
-        self.command = '{background} {python} {directory}/{task}{extension} {id} {background_end}'.format(prepare)
+        prepare = {}
+        prepare['background'] = self.conf_task.background
+        prepare['python'] = self.conf_task.python
+        prepare['directory'] = conf.App.dir_task
+        prepare['task'] = self.task
+        prepare['extension'] = self.conf_task.python_extension
+        prepare['id'] = self.id
+        prepare['background_end'] = self.conf_task.background_end
+        self.command = self.conf_task.template_command.format(**prepare)
+        prepare['binary'] = self.conf_task.binary
+        prepare['script'] = self.conf_task.script_can_run
+        prepare['script_extension'] = self.conf_task.script_can_run_extension
+        prepare['timeout'] = self.conf_task.kill_timeout
+        self.local_check = self.conf_task.template_local_check.format(**prepare)
+
+    def can_run(self):
+        if self.status != self.conf_task.status_order:
+            self.error = self.conf_task.error_not_order
+            self.save()
+            logger('debug', 'can_run failed: {}'.format(self.error))
+            return False
+        try: 
+            subprocess.check_call(self.local_check, shell=True)
+            logger('debug', 'can_run success')
+            return True
+        except subprocess.CalledProcessError as error:
+            self.error = error
+            logger('debug', 'can_run failed: {}'.format(error))
+        return False
+
+    def start_task(self):
+        if self.status != self.conf_task.status_ready:
+            self.error = self.conf_task.error_not_ready
+            self.save()
+            logger('debug', 'start_task failed: {}'.format(self.error))
+            return False
+        try: 
+            subprocess.check_call(self.command, shell=True)
+            logger('debug', 'start_task success')
+            return True
+        except subprocess.CalledProcessError as error:
+            self.error = error
+            logger('debug', 'start_task failed: {}'.format(error))
+        return False
+        
