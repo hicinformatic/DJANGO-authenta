@@ -16,16 +16,16 @@ def howtoaccess(authorized=None):
                 logger('debug', 'how to access: is_superuser, id: {}'.format(request.user.id))
                 return view_func(request, *args, **kwargs)
             if request.META['HTTP_HOST'] in authorized:
-                setattr(request.user, conf.uniqidentity, conf.localcallname)
-                logger('debug', 'how to access: HTTP_HOST, id: {}'.format(conf.localcallname))
+                setattr(request.user, conf.User.unique_identity, conf.Task.update_by_local)
+                logger('debug', 'how to access: HTTP_HOST, id: {}'.format(conf.Task.update_by_local))
                 return view_func(request, *args, **kwargs)
             if request.META['HTTP_X_REAL_IP'] in authorized:
-                setattr(request.user, conf.uniqidentity, conf.localcallname)
-                logger('debug', 'how to access: HTTP_X_REAL_IP, id: {}'.format(conf.localcallname))
+                setattr(request.user, conf.User.unique_identity, conf.Task.update_by_local)
+                logger('debug', 'how to access: HTTP_X_REAL_IP, id: {}'.format(conf.Task.update_by_local))
                 return view_func(request, *args, **kwargs)
             if request.META[ 'HTTP_X_FORWARDED_FOR'] in authorized:
-                setattr(request.user, conf.uniqidentity, conf.localcallname)
-                logger('debug', 'how to access: HTTP_X_FORWARDED_FOR, id: {}'.format(conf.localcallname))
+                setattr(request.user, conf.User.unique_identity, conf.Task.update_by_local)
+                logger('debug', 'how to access: HTTP_X_FORWARDED_FOR, id: {}'.format(conf.Task.update_by_local))
                 return view_func(request, *args, **kwargs)
             return HttpResponseForbidden()
         return _wrapped_view

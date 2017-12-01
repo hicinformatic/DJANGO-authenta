@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from .apps import AuthentaConfig as conf
 from .manager import UserManager
 
+import subprocess
 import unicodedata
 logger = conf.logger
 
@@ -18,8 +19,8 @@ logger = conf.logger
 class Update(models.Model):
     date_create = models.DateTimeField(conf.App.vn_date_create, auto_now_add=True, editable=False)
     date_update = models.DateTimeField(conf.App.vn_date_update, auto_now=True, editable=False)
-    update_by = models.CharField(conf.App.vn_update_by, blank=True, editable=False, max_length=254, null=True)
-    error = models.TextField(conf.App.vn_error, blank=True, null=True)
+    update_by = models.CharField(conf.App.vn_update_by, blank=True, editable=False, max_length=254, null=True, help_text=conf.App.ht_update_by)
+    error = models.TextField(conf.App.vn_error, blank=True, null=True, help_text=conf.App.ht_error)
 
     class Meta:
         abstract = True
@@ -38,7 +39,7 @@ class Group(Group, Update):
 #╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝
 class Method(Update):
     conf_method = conf.Method
-    method = models.CharField(conf_method.vn_method, choices=conf_method.choices, default=conf_method.default, help_text=conf_method.ht_method, max_length=4)
+    method = models.CharField(conf_method.vn_method, choices=tuple(conf_method.choices), default=conf_method.default, help_text=conf_method.ht_method, max_length=4)
     name = models.CharField(conf_method.vn_name, help_text=conf_method.ht_name, max_length=254)
     enable = models.BooleanField(conf_method.vn_enable, default=True, help_text=conf_method.ht_enable)
     is_active = models.BooleanField(conf_method.vn_is_active, default=True)
@@ -47,18 +48,22 @@ class Method(Update):
     groups = models.ManyToManyField(Group, verbose_name=conf_method.vn_groups, blank=True)
     permissions = models.ManyToManyField(Permission, verbose_name=conf_method.vn_permissions, blank=True)
 
-    conf_ldap = conf.ldap
-    ldap_host = models.CharField(conf_ldap.vn_ldap_host, blank=True, default=conf_ldap.host, help_text=conf_ldap.ht_ldap_host, max_length=254, null=True)
-    ldap_port = models.PositiveIntegerField(conf_ldap.vn_ldap_port, blank=True, default=conf_ldap.port, help_text=conf_ldap.ht_ldap_port, null=True, validators=[MinValueValidator(0), MaxValueValidator(65535)])
-    ldap_tls = models.BooleanField(conf_ldap.vn_ldap_tls, default=False, help_text=conf_ldap.ht_ldap_tls)
-    ldap_cert = models.FileField(conf_ldap.vn_ldap_cert, blank=True, help_text=conf_ldap.ht_ldap_cert, null=True, upload_to=conf_ldap.dir_cert)
-    ldap_define = models.CharField(conf_ldap.vn_ldap_define, blank=True, help_text=conf_ldap.ht_ldap_define, max_length=254, null=True)
-    ldap_scope = models.CharField(conf_ldap.vn_ldap_scope, choices=conf_ldap.choices_scope, default=conf_ldap.scope, help_text=conf_ldap.ht_ldap_scope, max_length=14)
-    ldap_version = models.CharField(conf_ldap.ht_ldap_version, choices=conf_ldap.choices_version, default=conf_ldap.version, help_text=conf_ldap.ht_ldap_version, max_length=8)
-    ldap_bind = models.CharField(conf_ldap.vn_ldap_bind, blank=True, help_text=conf_ldap.ht_ldap_bind, max_length=254, null=True)
-    ldap_password = models.CharField(conf_ldap.vn_ldap_password, blank=True, help_text=conf_ldap.ht_ldap_password, max_length=254, null=True)
-    ldap_user = models.TextField(conf_ldap.vn_ldap_user, blank=True, help_text=conf_ldap.ht_ldap_user, null=True)
-    ldap_search = models.TextField(conf_ldap.vn_ldap_search, help_text=conf_ldap.ht_ldap_search, blank=True, null=True)
+    if conf.ldap.activate:
+        conf_ldap = conf.ldap
+        ldap_host = models.CharField(conf_ldap.vn_ldap_host, blank=True, default=conf_ldap.host, help_text=conf_ldap.ht_ldap_host, max_length=254, null=True)
+        ldap_port = models.PositiveIntegerField(conf_ldap.vn_ldap_port, blank=True, default=conf_ldap.port, help_text=conf_ldap.ht_ldap_port, null=True, validators=[MinValueValidator(0), MaxValueValidator(65535)])
+        ldap_tls = models.BooleanField(conf_ldap.vn_ldap_tls, default=False, help_text=conf_ldap.ht_ldap_tls)
+        ldap_cert = models.TextField(conf_ldap.vn_ldap_cert, blank=True, help_text=conf_ldap.ht_ldap_cert, null=True)
+        ldap_define = models.CharField(conf_ldap.vn_ldap_define, blank=True, help_text=conf_ldap.ht_ldap_define, max_length=254, null=True)
+        ldap_scope = models.CharField(conf_ldap.vn_ldap_scope, choices=conf_ldap.choices_scope, default=conf_ldap.scope, help_text=conf_ldap.ht_ldap_scope, max_length=14)
+        ldap_version = models.CharField(conf_ldap.ht_ldap_version, choices=conf_ldap.choices_version, default=conf_ldap.version, help_text=conf_ldap.ht_ldap_version, max_length=8)
+        ldap_bind = models.CharField(conf_ldap.vn_ldap_bind, blank=True, help_text=conf_ldap.ht_ldap_bind, max_length=254, null=True)
+        ldap_password = models.CharField(conf_ldap.vn_ldap_password, blank=True, help_text=conf_ldap.ht_ldap_password, max_length=254, null=True)
+        ldap_user = models.TextField(conf_ldap.vn_ldap_user, blank=True, help_text=conf_ldap.ht_ldap_user, null=True)
+        ldap_search = models.TextField(conf_ldap.vn_ldap_search, help_text=conf_ldap.ht_ldap_search, blank=True, null=True)
+    
+    def ldap_certificate(self):
+        return self.ldap_cert
 
     class Meta:
         verbose_name = conf.Method.verbose_name
@@ -119,14 +124,10 @@ class Task(Update):
     def __str__(self):
         return self.get_task_display()
 
-    def save(self, *args, **kwargs):
-        self.prepare()
-        super(Task, self).save(*args, **kwargs)
-        logger('notice', 'local_check: {}'.format(self.local_check))
-        logger('notice', 'command: {}'.format(self.command))
-
     def prepare(self):
         prepare = {}
+        prepare['namespace'] = conf.App.namespace
+        prepare['port'] = self.conf_task.django_port
         prepare['background'] = self.conf_task.background
         prepare['python'] = self.conf_task.python
         prepare['directory'] = conf.App.dir_task
@@ -140,6 +141,7 @@ class Task(Update):
         prepare['script_extension'] = self.conf_task.script_can_run_extension
         prepare['timeout'] = self.conf_task.kill_timeout
         self.local_check = self.conf_task.template_local_check.format(**prepare)
+        self.save()
 
     def can_run(self):
         if self.status != self.conf_task.status_order:
@@ -148,6 +150,7 @@ class Task(Update):
             logger('debug', 'can_run failed: {}'.format(self.error))
             return False
         try: 
+            logger('notice', 'local_check: {}'.format(self.local_check))
             subprocess.check_call(self.local_check, shell=True)
             logger('debug', 'can_run success')
             return True
@@ -163,6 +166,7 @@ class Task(Update):
             logger('debug', 'start_task failed: {}'.format(self.error))
             return False
         try: 
+            logger('notice', 'command: {}'.format(self.command))
             subprocess.check_call(self.command, shell=True)
             logger('debug', 'start_task success')
             return True

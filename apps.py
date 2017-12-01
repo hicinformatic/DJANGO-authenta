@@ -36,7 +36,9 @@ class Config(OverConfig):
         vn_date_create = _('Creation date')
         vn_date_update = _('Last modification date')
         vn_update_by = _('Update by')
+        ht_update_by = _('Last user who modified')
         vn_error = _('Error encountered')
+        ht_error = _('Detail about the error')
         vn_method = _('authentication method')
         vpn_method = _('authentication methods')
         vn_task = _('# Task')
@@ -83,8 +85,7 @@ class Config(OverConfig):
         info_code = 6
         info_color = '\033[0;94m'
         debug_code = 7
-        debug_color = '\033[0;30;5;100m'
-        
+        debug_color = '\033[0;30;5;100m'     
 
 #███████╗██╗  ██╗████████╗███████╗███╗   ██╗███████╗██╗ ██████╗ ███╗   ██╗
 #██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝████╗  ██║██╔════╝██║██╔═══██╗████╗  ██║
@@ -104,6 +105,8 @@ class Config(OverConfig):
         authorized = ['html', 'js', 'json', 'txt', 'csv']
         kwarg_extension = 'extension'
         default_extension = 'html'
+        regex = None
+        url_template = '.{}'
 
 # ██████╗ ██████╗ ███╗   ██╗████████╗███████╗███╗   ██╗████████╗████████╗██╗   ██╗██████╗ ███████╗
 #██╔════╝██╔═══██╗████╗  ██║╚══██╔══╝██╔════╝████╗  ██║╚══██╔══╝╚══██╔══╝╚██╗ ██╔╝██╔══██╗██╔════╝
@@ -139,16 +142,6 @@ class Config(OverConfig):
         site_header = _('Django administration')
         index_title = _('Site administration (assisted by Authenta)')
         verbose_name = _('Authentication and Authorization')
-
-
-#██████╗ ███████╗ ██████╗ ███████╗██╗  ██╗
-#██╔══██╗██╔════╝██╔════╝ ██╔════╝╚██╗██╔╝
-#██████╔╝█████╗  ██║  ███╗█████╗   ╚███╔╝ 
-#██╔══██╗██╔══╝  ██║   ██║██╔══╝   ██╔██╗ 
-#██║  ██║███████╗╚██████╔╝███████╗██╔╝ ██╗
-#╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝
-    class Regex(OverConfig):
-        extension = None
 
     class Group(OverConfig):
         list_display = None
@@ -249,12 +242,11 @@ class Config(OverConfig):
         fieldsets += ((_('Groups and permissions'), { 'classes': ('wide',), 'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'permissions' ),}),)
         fieldsets += OverConfig.fieldsets
         filter_horizontal = ('groups', 'permissions')
-        list_display = ('name', 'method', 'enable', 'is_active', 'is_staff', 'is_superuser', 'status')
+        list_display = ('name', 'method', 'enable', 'is_active', 'is_staff', 'is_superuser', 'status', 'ldap_certificate')
         list_filter = ('method', 'enable',)
         search_fields = ('name',)
         readonly_fields = OverConfig.readonly_fields
         method_accepted = ['ldap',]
-
 
 #██╗     ██████╗  █████╗ ██████╗ 
 #██║     ██╔══██╗██╔══██╗██╔══██╗
@@ -275,7 +267,8 @@ class Config(OverConfig):
         certificates = '{}/{}'
         fieldsets = ((_('LDAP method'), {
             'classes': ('collapse',),
-            'fields': ('ldap_host', 'ldap_port', 'ldap_tls', 'ldap_cert', 'ldap_define', 'ldap_scope', 'ldap_version', 'ldap_bind', 'ldap_password', 'ldap_user', 'ldap_search',),}),)
+            'fields': ('ldap_host', 'ldap_port', 'ldap_tls', 'ldap_cert', 'ldap_certificate', 'ldap_define', 'ldap_scope', 'ldap_version', 'ldap_bind', 'ldap_password', 'ldap_user', 'ldap_search',),}),)
+        readonly_fields = ('ldap_certificate',)
         vn_ldap_host = _('Use hostname or IP address')
         vn_ldap_port = _('Port')
         vn_ldap_tls = _('Option TLS')
@@ -332,7 +325,7 @@ class Config(OverConfig):
             ('cache_methods',  _('Generate cache')),
         )
         list_display = ('task', 'status')
-        fieldsets = ((_('Globals'), { 'fields': ('task', 'info', 'error', 'command', 'local_check'), }),)
+        fieldsets = ((_('Globals'), { 'fields': ('task', 'status', 'info', 'error', 'command', 'local_check'), }),)
         fieldsets += OverConfig.fieldsets
         readonly_fields = OverConfig.readonly_fields
         readonly_fields += ('command', 'local_check')
@@ -341,7 +334,7 @@ class Config(OverConfig):
         vn_status = _('Status')
         vn_commmand = _('Command')
         vn_local_check = _('Local check')
-        ht_task = _('Task to be done')
+        ht_task = _('Task to be done. Can be: {}'.format(', '.join([task[0] for task in script_tasks])))
         ht_info = _('Information about the task')
         ht_status = _('Can be: {}'.format(', '.join([s[0] for s in status])))
         ht_commmand = _('Command used to run the script')
@@ -359,17 +352,23 @@ class Config(OverConfig):
         ip_authorized = ['127.0.0.1',]
         django_port = 8000
         update_by_local = 'local_robot'
-        template_command = '{background} {python} {directory}/{task}{extension} {id} {background_end}'
-        template_local_check = '{binary} {directory}/{script}{script_extension} {task} {timeout} {id}'
+        template_command = '{background} {python} {directory}/{task}{extension} {port} {namespace} {id} {background_end}'
+        template_local_check = '{background} {binary} {directory}/{script}{script_extension} {port} {namespace} {timeout} {id} {background_end}'
         fields_detail = ['task', 'info', 'status', 'error']
         fields_create = ['task', 'info']
-        fields_update = ['task', 'status', 'info', 'error']
+        fields_update = ['status', 'info', 'error']
         view_absolute = '{}:TaskDetail'
+
+for method in Config.Method.method_accepted:
+    if getattr(Config, method).activate is True:
+        Config.Method.choices += ((getattr(Config, method).name, getattr(Config, method).option),)
+        Config.Method.fieldsets += getattr(Config, method).fieldsets
 
 class AuthentaConfig(AppConfig, Config):
     name = 'authenta'
 
     def ready(self):
+        from . import signals
         self.logger('info', 'log level: {}'.format(self.Log.log_level))
         if self.User.add_fieldsets is None:
             self.User.list_display = (self.User.unique_identity, 'is_active', 'is_staff', 'date_joined')
@@ -377,13 +376,9 @@ class AuthentaConfig(AppConfig, Config):
         if self.User.add_fieldsets is None:
             self.User.add_fieldsets = (( None, { 'fields': (self.User.unique_identity, self.User.required_fields, 'password1', 'password2') }),)
         self.logger('debug', 'User add field: {}'.format(self.User.add_fieldsets))
-        if self.Regex.extension is None:
-            self.Regex.extension = '|'.join([ext for ext in self.Extension.authorized])
-        self.logger('debug', 'Regex extensions: {}'.format(self.Regex.extension))
-        for method in self.Method.method_accepted:
-            if getattr(self, method).activate is True:
-                self.Method.choices += ((getattr(self, method).name, getattr(self, method).option),)
-                self.Method.fieldsets += getattr(self, method).fieldsets
+        if self.Extension.regex is None:
+            self.Extension.regex = '|'.join([ext for ext in self.Extension.authorized])
+        self.logger('debug', 'Regex extensions: {}'.format(self.Extension.regex))
         self.logger('debug', 'Choices method: {}'.format(self.Method.choices))
         self.Task.view_absolute = self.Task.view_absolute.format(self.App.namespace)
 

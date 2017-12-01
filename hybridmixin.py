@@ -5,6 +5,7 @@ from django.middleware.csrf import get_token
 from django.views.generic.edit import (CreateView, UpdateView)
 from django.views.generic import DetailView
 from django.middleware.csrf import get_token
+from django.urls import reverse
 
 from .apps import AuthentaConfig as  conf
 import csv
@@ -29,9 +30,9 @@ class Hybrid(object):
     meta_accepted = conf.App.meta_accepted
 
     def dispatch(self, request, *args, **kwargs):
-        if self.kwarg_extension in self.kwargs:
+        if self.kwarg_extension in self.kwargs and self.kwargs[self.kwarg_extension] is not None:
             self.extension = self.kwargs[self.kwarg_extension]
-            self.response = 'response_{}'.format(self.extension)
+        self.response = 'response_{}'.format(self.extension)
         logger('debug', self.extension)
         return super(Hybrid, self).dispatch(request)
 
@@ -95,6 +96,7 @@ class Hybrid(object):
     def post(self, request, *args, **kwargs):
         form = self.get_form()
         form.instance.update_by = getattr(self.request.user, conf.User.unique_identity)
+        return super(Hybrid, self).post(request)
 
 #██╗  ██╗██╗   ██╗██████╗ ██████╗ ██╗██████╗ ██████╗ ███████╗████████╗ █████╗ ██╗██╗     
 #██║  ██║╚██╗ ██╔╝██╔══██╗██╔══██╗██║██╔══██╗██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██║██║     
@@ -134,76 +136,36 @@ class HybridCreateUpdateDelete(Hybrid):
     token = None
     view_absolute = None
 
-#   def get_context_data(self, **kwargs):
-#       context = super(HybridCreateUpdateDelete, self).get_context_data(**kwargs)
-#       self.token = get_token(self.request)
-#       logger('debug', 'token: {}'.format(self.token))
-#       return context
-#
-#   def get_success_url(self):
-#       if view_absolute is not None:
-#           return reverse(self.view_absolute, kwargs={'pk': self.object.id, self.kwarg_extension: conf.extensions[self.extension]})
-#       return super(HybridCreateUpdateDelete, self).get_success_url()
-#
-#   def response_json(self, context):
-#       data = { field.html_name: field.help_text for field in context[conf.App.form] }
-#       data[conf.App.form_token] = self.token
-#       return JsonResponse(data, safe=False)
-#
-#   def response_txt(self, context):
-#       data = [conf.ContentType.txt_detail_template.format(field.html_name, field.help_text) for field in context[conf.App.form]]
-#       data.append(conf.ContentType.txt_detail_template.format(conf.App.form_token, self.token))
-#       return HttpResponse(conf.ContentType.txt_detail_separator.join(data), content_type=conf.ContentType.txt)
-#
-#   def response_csv(self, context):
-#       header = self.fields
-#       header.append(conf.App.form_token)
-#       data = [ field.help_text for field in context[conf.App.form] ]
-#       data.append(self.token)
-#       response = HttpResponse(content_type=conf.ContentType.csv)
-#       writer = csv.writer(response)
-#       writer.writerow(header)
-#       writer.writerow(data)
-#       return response
-
-
-from django.urls import reverse
-class HybridCreateView(HybridCreateUpdateDelete, CreateView):
-#    template_name = conf.App.template_form
-#    token = None
-#    view_absolute = None
-
-#    def get_context_data(self, **kwargs):
-#        context = super(HybridCreateView, self).get_context_data(**kwargs)
-#        self.token = get_token(self.request)
-#        logger('debug', 'token: {}'.format(self.token))
-#        return context
-#
+    def get_context_data(self, **kwargs):
+        context = super(HybridCreateUpdateDelete, self).get_context_data(**kwargs)
+        self.token = get_token(self.request)
+        logger('debug', 'token: {}'.format(self.token))
+        return context
+  
     def get_success_url(self):
         if self.view_absolute is not None:
-            return reverse(self.view_absolute, kwargs={'pk': self.object.id, 'extension': 'html'})
-        return 'oto'
-#
-#    def response_json(self, context):
-#        data = { field.html_name: field.help_text for field in context[conf.App.form] }
-#        data[conf.App.form_token] = self.token
-#        return JsonResponse(data, safe=False)
-#
-#    def response_txt(self, context):
-#        data = [conf.ContentType.txt_detail_template.format(field.html_name, field.help_text) for field in context[conf.App.form]]
-#        data.append(conf.ContentType.txt_detail_template.format(conf.App.form_token, self.token))
-#        return HttpResponse(conf.ContentType.txt_detail_separator.join(data), content_type=conf.ContentType.txt)
-#
-#    def response_csv(self, context):
-#        header = self.fields
-#        header.append(conf.App.form_token)
-#        data = [ field.help_text for field in context[conf.App.form] ]
-#        data.append(self.token)
-#        response = HttpResponse(content_type=conf.ContentType.csv)
-#        writer = csv.writer(response)
-#        writer.writerow(header)
-#        writer.writerow(data)
-#        return response
+            return reverse(self.view_absolute, kwargs={'pk': self.object.id, self.kwarg_extension: conf.Extension.url_template.format(self.extension)})
+        return super(HybridCreateUpdateDelete, self).get_success_url()
+  
+    def response_json(self, context):
+        data = { field.html_name: field.help_text for field in context[conf.App.form] }
+        data[conf.App.form_token] = self.token
+        return JsonResponse(data, safe=False)
+  
+    def response_txt(self, context):
+        data = [conf.ContentType.txt_detail_template.format(field.html_name, field.help_text) for field in context[conf.App.form]]
+        data.append(conf.ContentType.txt_detail_template.format(conf.App.form_token, self.token))
+        return HttpResponse(conf.ContentType.txt_detail_separator.join(data), content_type=conf.ContentType.txt)
+  
+    def response_csv(self, context):
+        response = HttpResponse(content_type=conf.ContentType.csv)
+        writer = csv.writer(response)
+        writer.writerow(self.fields + [conf.App.form_token])
+        writer.writerow([ field.help_text for field in context[conf.App.form] ] + [ self.token ])
+        return response
+
+class HybridCreateView(HybridCreateUpdateDelete, CreateView):
+    pass
 
 class HybridUpdateView(HybridCreateUpdateDelete, UpdateView):
     pass

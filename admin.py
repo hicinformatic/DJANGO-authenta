@@ -3,6 +3,8 @@ from django.contrib import admin
 from django.contrib.admin import sites
 #from django.contrib.auth.models import Group
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
+
+from .forms import MethodAdminAdminForm
 from .models import (Method, Group as CustomGroup, User as CustomUser, Task)
 
 class AuthentaAdminSite(admin.AdminSite):
@@ -42,17 +44,17 @@ class CustomGroup(OverAdmin, GroupAdmin):
 
 @admin.register(Method)
 class MethodAdmin(OverAdmin, StatusAdmin):
+    form = MethodAdminAdminForm
     fieldsets = conf.Method.fieldsets
     filter_horizontal = conf.Method.filter_horizontal
     list_display = conf.Method.list_display
     list_filter = conf.Method.list_filter
     search_fields = conf.Method.search_fields
     readonly_fields = conf.Method.readonly_fields
+    if conf.ldap.activate: readonly_fields += conf.ldap.readonly_fields
 
 @admin.register(Task)
 class TaskAdmin(OverAdmin, StatusAdmin):
     fieldsets = conf.Task.fieldsets
     list_display = conf.Task.list_display
     readonly_fields = conf.Task.readonly_fields
-    pass
-
