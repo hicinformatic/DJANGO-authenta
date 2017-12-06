@@ -29,7 +29,7 @@ class Config(OverConfig):
         dir_app = os.path.dirname(os.path.realpath(__file__))
         dir_logs = '{}/logs'.format(dir_app)
         dir_task = '{}/tasks'.format(dir_app)
-        dir_cache = '{}/caches'.format(dir_app)
+        dir_cache = '{}/cache'.format(dir_app)
         dir_cert = '{}/certs'.format(dir_app)
         namespace = 'authenta'
         field_update_by = 'update_by'
@@ -122,11 +122,18 @@ class Config(OverConfig):
         txt = 'text/plain'
         csv = 'text/csv'
         xml = 'application/xml'
-        csv_related_template = '[ {} ]'
-        csv_related_join = ','
+
+      
+        csv_related_container = '[{}]'
+        csv_related_separator = ' && '
+        csv_related_subtemplate = '{}={}'
+        csv_related_subseparator = ';;'
+
+
         txt_detail_template = '{}:{}'
         txt_detail_separator = ' // '
-        txt_related_template = '{}:[ {} ]'
+        txt_related_template = '{}:{}'
+        txt_related_container = '[{}]'
         txt_related_separator = ' && '
         txt_related_subtemplate = '{}={}'
         txt_related_subseparator = ';;'
@@ -247,6 +254,9 @@ class Config(OverConfig):
         search_fields = ('name',)
         readonly_fields = OverConfig.readonly_fields
         method_accepted = ['ldap',]
+        fields_detail = ['id', 'method', 'name', 'is_active', 'is_staff', 'is_superuser', 'groups', 'permissions']
+        fields_groups = ['id', 'name']
+        fields_permissions = ['id', '__str__']
 
 #██╗     ██████╗  █████╗ ██████╗ 
 #██║     ██╔══██╗██╔══██╗██╔══██╗
@@ -352,12 +362,15 @@ class Config(OverConfig):
         ip_authorized = ['127.0.0.1',]
         django_port = 8000
         update_by_local = 'local_robot'
-        template_command = '{background} {python} {directory}/{task}{extension} {port} {namespace} {id} {background_end}'
+        template_command = '{background} {python} {directory}/{task}{extension} {id} {background_end}'
         template_local_check = '{background} {binary} {directory}/{script}{script_extension} {port} {namespace} {timeout} {id} {background_end}'
         fields_detail = ['task', 'info', 'status', 'error']
         fields_create = ['task', 'info']
         fields_update = ['status', 'info', 'error']
+        fields_purge = ['number', ]
         view_absolute = '{}:TaskDetail'
+        purge_number = 100
+        purge_day = 5
 
 for method in Config.Method.method_accepted:
     if getattr(Config, method).activate is True:
@@ -369,6 +382,15 @@ class AuthentaConfig(AppConfig, Config):
 
     def ready(self):
         from . import signals
+        if not os.path.exists(self.App.dir_logs): 
+            os.makedirs(self.App.dir_logs)
+            self.logger('info', 'Create directory: {}'.format(self.App.dir_logs))
+        if not os.path.exists(self.App.dir_cache): 
+            os.makedirs(self.App.dir_cache)
+            self.logger('info', 'Create directory: {}'.format(self.App.dir_cache))
+        if not os.path.exists(self.App.dir_cert): 
+            os.makedirs(self.App.dir_cert)
+            self.logger('info', 'Create directory: {}'.format(self.App.dir_cert))
         self.logger('info', 'log level: {}'.format(self.Log.log_level))
         if self.User.add_fieldsets is None:
             self.User.list_display = (self.User.unique_identity, 'is_active', 'is_staff', 'date_joined')
@@ -381,6 +403,7 @@ class AuthentaConfig(AppConfig, Config):
         self.logger('debug', 'Regex extensions: {}'.format(self.Extension.regex))
         self.logger('debug', 'Choices method: {}'.format(self.Method.choices))
         self.Task.view_absolute = self.Task.view_absolute.format(self.App.namespace)
+        self.Task.purge_number+=1
 
 
 #██╗      ██████╗  ██████╗  ██████╗ ███████╗██████╗ 

@@ -7,12 +7,16 @@ task = Task(taskid, scriptname)
 task.update('start', 'Started')
 
 import urllib.request, urllib.parse, json
-url = 'authenta/task/purge.json'
+url = 'task/purge.json'
 url = task.getUrl(url)
-
 task.update('running', 'Delete tasks')
-with urllib.request.urlopen(url) as url:
-    methods = json.loads(url.read().decode())
-    print(str(methods))
 
-task.update('complete', 'Complete')
+def purge(url):
+    with urllib.request.urlopen(url) as curl:
+        curl = json.loads(curl.read().decode())
+        if curl['number'] > 0:
+            return curl['number']+purge(url)
+        return curl['number']
+number = purge(url)
+
+task.update('complete', number)
