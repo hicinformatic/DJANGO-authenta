@@ -6,6 +6,7 @@ from .apps import AuthentaConfig as  conf
 from .decorators import howtoaccess
 from .hybridmixin import (HybridDetailView, HybridTemplateView, HybridListView, HybridCreateView, HybridUpdateView, FakeModel)
 from .models import (Method, Task)
+from .forms import MethodAdminForm
 
 from datetime import datetime, timedelta
 
@@ -15,13 +16,31 @@ from datetime import datetime, timedelta
 #██║╚██╔╝██║██╔══╝     ██║   ██╔══██║██║   ██║██║  ██║
 #██║ ╚═╝ ██║███████╗   ██║   ██║  ██║╚██████╔╝██████╔╝
 #╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝
+class MethodAdminCheck(HybridDetailView):
+    model = Method
+    fields_detail = ['name',]
+
+@method_decorator(howtoaccess(conf.Task.host_authorized+['is_superuser','is_staff']), name='dispatch')
+class MethodFunction(HybridUpdateView):
+    model = Method
+    form_class = MethodAdminForm
+    view_absolute = conf.Method.view_absolute
+
+@method_decorator(howtoaccess(conf.Task.host_authorized+['is_superuser','is_staff']), name='dispatch')
+class MethodDetail(HybridDetailView):
+    model = Method
+    fields_detail = ['name',]
+
 @method_decorator(howtoaccess(conf.Task.host_authorized+['is_superuser','is_staff']), name='dispatch')
 class MethodList(HybridListView):
     model = Method
-    template_name = 'authenta/list.html'
+    template_name = conf.App.template_list
     fields_detail = conf.Method.fields_detail
     groups = conf.Method.fields_groups
     permissins = conf.Method.fields_permissions
+
+
+
 
 #████████╗ █████╗ ███████╗██╗  ██╗
 #╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝

@@ -6,8 +6,9 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from .apps import AuthentaConfig as conf
 from .manager import UserManager
 
-import subprocess
-import unicodedata
+from .methods import (ldap as method_ldap)
+
+import os, subprocess, unicodedata
 logger = conf.logger
 
 #██╗   ██╗██████╗ ██████╗  █████╗ ████████╗███████╗
@@ -27,6 +28,7 @@ class Update(models.Model):
 
     def status(self):
         return True if self.error is None else False
+    status.boolean = True
 
 class Group(Group, Update):
     pass
@@ -38,36 +40,65 @@ class Group(Group, Update):
 #██║ ╚═╝ ██║███████╗   ██║   ██║  ██║╚██████╔╝██████╔╝
 #╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝
 class Method(Update):
-    conf_method = conf.Method
-    method = models.CharField(conf_method.vn_method, choices=tuple(conf_method.choices), default=conf_method.default, help_text=conf_method.ht_method, max_length=4)
-    name = models.CharField(conf_method.vn_name, help_text=conf_method.ht_name, max_length=254)
-    enable = models.BooleanField(conf_method.vn_enable, default=True, help_text=conf_method.ht_enable)
-    is_active = models.BooleanField(conf_method.vn_is_active, default=True)
-    is_staff = models.BooleanField(conf_method.vn_is_staff, default=False)
-    is_superuser = models.BooleanField(conf_method.vn_superuser, default=False)
-    groups = models.ManyToManyField(Group, verbose_name=conf_method.vn_groups, blank=True)
-    permissions = models.ManyToManyField(Permission, verbose_name=conf_method.vn_permissions, blank=True)
+    method_conf = conf.Method
+    method = models.CharField(method_conf.vn_method, choices=tuple(method_conf.choices), default=method_conf.default, help_text=method_conf.ht_method, max_length=4)
+    name = models.CharField(method_conf.vn_name, help_text=method_conf.ht_name, max_length=254)
+    enable = models.BooleanField(method_conf.vn_enable, default=True, help_text=method_conf.ht_enable)
+    port = models.PositiveIntegerField(method_conf.vn_port, blank=True, default=method_conf.port, help_text=method_conf.ht_port, null=True, validators=[MinValueValidator(0), MaxValueValidator(65535)])
+    
+    tls = models.BooleanField(method_conf.vn_tls, default=False, help_text=method_conf.ht_tls)
+    certificate = models.TextField(method_conf.vn_certificate, blank=True, help_text=method_conf.ht_certificate, null=True)
+    
+    is_active = models.BooleanField(method_conf.vn_is_active, default=True)
+    is_staff = models.BooleanField(method_conf.vn_is_staff, default=False)
+    is_superuser = models.BooleanField(method_conf.vn_superuser, default=False)
+    groups = models.ManyToManyField(Group, verbose_name=method_conf.vn_groups, blank=True)
+    permissions = models.ManyToManyField(Permission, verbose_name=method_conf.vn_permissions, blank=True)
 
     if conf.ldap.activate:
-        conf_ldap = conf.ldap
-        ldap_host = models.CharField(conf_ldap.vn_ldap_host, blank=True, default=conf_ldap.host, help_text=conf_ldap.ht_ldap_host, max_length=254, null=True)
-        ldap_port = models.PositiveIntegerField(conf_ldap.vn_ldap_port, blank=True, default=conf_ldap.port, help_text=conf_ldap.ht_ldap_port, null=True, validators=[MinValueValidator(0), MaxValueValidator(65535)])
-        ldap_tls = models.BooleanField(conf_ldap.vn_ldap_tls, default=False, help_text=conf_ldap.ht_ldap_tls)
-        ldap_cert = models.TextField(conf_ldap.vn_ldap_cert, blank=True, help_text=conf_ldap.ht_ldap_cert, null=True)
-        ldap_define = models.CharField(conf_ldap.vn_ldap_define, blank=True, help_text=conf_ldap.ht_ldap_define, max_length=254, null=True)
-        ldap_scope = models.CharField(conf_ldap.vn_ldap_scope, choices=conf_ldap.choices_scope, default=conf_ldap.scope, help_text=conf_ldap.ht_ldap_scope, max_length=14)
-        ldap_version = models.CharField(conf_ldap.ht_ldap_version, choices=conf_ldap.choices_version, default=conf_ldap.version, help_text=conf_ldap.ht_ldap_version, max_length=8)
-        ldap_bind = models.CharField(conf_ldap.vn_ldap_bind, blank=True, help_text=conf_ldap.ht_ldap_bind, max_length=254, null=True)
-        ldap_password = models.CharField(conf_ldap.vn_ldap_password, blank=True, help_text=conf_ldap.ht_ldap_password, max_length=254, null=True)
-        ldap_user = models.TextField(conf_ldap.vn_ldap_user, blank=True, help_text=conf_ldap.ht_ldap_user, null=True)
-        ldap_search = models.TextField(conf_ldap.vn_ldap_search, help_text=conf_ldap.ht_ldap_search, blank=True, null=True)
+        ldap_conf = conf.ldap
+        ldap_host = models.CharField(ldap_conf.vn_ldap_host, blank=True, default=ldap_conf.host, help_text=ldap_conf.ht_ldap_host, max_length=254, null=True)
+        ldap_define = models.CharField(ldap_conf.vn_ldap_define, blank=True, help_text=ldap_conf.ht_ldap_define, max_length=254, null=True)
+        ldap_scope = models.CharField(ldap_conf.vn_ldap_scope, choices=ldap_conf.choices_scope, default=ldap_conf.scope, help_text=ldap_conf.ht_ldap_scope, max_length=14)
+        ldap_version = models.CharField(ldap_conf.ht_ldap_version, choices=ldap_conf.choices_version, default=ldap_conf.version, help_text=ldap_conf.ht_ldap_version, max_length=8)
+        ldap_bind = models.CharField(ldap_conf.vn_ldap_bind, blank=True, help_text=ldap_conf.ht_ldap_bind, max_length=254, null=True)
+        ldap_password = models.CharField(ldap_conf.vn_ldap_password, blank=True, help_text=ldap_conf.ht_ldap_password, max_length=254, null=True)
+        ldap_user = models.TextField(ldap_conf.vn_ldap_user, blank=True, help_text=ldap_conf.ht_ldap_user, null=True)
+        ldap_search = models.TextField(ldap_conf.vn_ldap_search, help_text=ldap_conf.ht_ldap_search, blank=True, null=True)
     
-    def ldap_certificate(self):
-        return self.ldap_cert
+    def certificate_path(self):
+        if self.certificate is not None:
+            return '{}/{}_{}.crt'.format(conf.App.dir_cert, self.name, self.method)
+        return None
+    certificate_path.short_description = method_conf.ht_certificate_path
+
+    def certificate_content(self):
+        certificate = self.certificate_path()
+        if certificate is not None:
+            if not os.path.isfile(certificate):
+                with open(certificate, 'w') as cert_file:
+                    cert_file.write(self.certificate)
+                cert_file.closed
+            return self.certificate
+        return None
+    certificate_content.short_description = method_conf.ht_certificate_content
 
     class Meta:
         verbose_name = conf.Method.verbose_name
         verbose_name_plural = conf.Method.verbose_name_plural
+
+    def method_get(self):
+        logger('debug', 'method getting: {}'.format(self.method))
+        gettatr('method_{}'.format(self.method).lower(), 'method{}'.format(self.method))(self)
+        #if self.method == 'LDAP': self.obj = methodLDAP(self)
+        return self.obj
+
+    def admin_button_check(self):
+        from django.urls import reverse
+        url = reverse('admin:{}_method_check'.format(conf.App.namespace, self._meta.model_name),  args=[self.id])
+        return '<a class="button" href="{}">{}</a>'.format(url, self.method_conf.vn_check)
+    admin_button_check.allow_tags = True
+    admin_button_check.short_description = method_conf.vn_check
 
 #██╗   ██╗███████╗███████╗██████╗ 
 #██║   ██║██╔════╝██╔════╝██╔══██╗

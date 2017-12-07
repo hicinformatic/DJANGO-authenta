@@ -23,5 +23,6 @@ with urllib.request.urlopen(url) as url:
     for method in cache:
         with open('{}/{}.json'.format(dir_cache, method), 'w') as cache_file:
             json.dump(cache[method], cache_file, indent=4, ensure_ascii=False)
+        cache_file.closed
 
 task.update('complete', 'Complete')

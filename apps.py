@@ -50,6 +50,7 @@ class Config(OverConfig):
         meta_accepted = ['ManyToManyField', ]
         template_detail = 'authenta/detail.html'
         template_form = 'authenta/form.html'
+        template_list = 'authenta/list.html'
         form = 'form'
         form_token = 'token'
 
@@ -151,7 +152,7 @@ class Config(OverConfig):
         verbose_name = _('Authentication and Authorization')
 
     class Group(OverConfig):
-        list_display = None
+        list_display = ['name', 'date_create', 'date_update']
         filter_horizontal = ('permissions',)
         readonly_fields = ('date_create', 'date_update', 'update_by')
         add_fieldsets = None
@@ -234,29 +235,42 @@ class Config(OverConfig):
         verbose_name_plural = _('Methods')
         choices = ()
         default = 'LDAP'
+        port = 389
+        view_admin_check = '{}_method_check'
         vn_method = _('Method')
         vn_name = _('Name')
         vn_enable = _('Enable')
+        vn_port = _('Port')
+        vn_tls = _('Enable TLS')
         vn_is_active = _('Will be active')
         vn_is_staff = _('Will be staff')
         vn_superuser = _('Will be superuser')
         vn_groups = _('Groups associated')
         vn_permissions = _('Permissions associated')
-        ht_method = _('Authentication type')
-        ht_name = _('Authentication Name')
-        ht_enable = _('Authentication enable or disable')
-        fieldsets = ((_('Globals'), { 'fields': ('method', 'name', 'enable', ), }),)
-        fieldsets += ((_('Groups and permissions'), { 'classes': ('wide',), 'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'permissions' ),}),)
-        fieldsets += OverConfig.fieldsets
+        vn_certificate = _('TLS Certificate')
+        vn_check = _('Check')
+        ht_port = _('Change the port used by the method')
+        ht_tls = _('Enable or disable TLS')
+        ht_certificate = _('Uploaded here the certificate to check')
+        ht_method = _('Method type')
+        ht_name = _('Method name')
+        ht_enable = _('Enable or disable the method')
+        ht_certificate_content = _('Certificate content')
+        ht_certificate_path = _('Certificate path')
+        fieldsets = ((_('Globals'), { 'fields': ('method', 'name', 'port', 'enable',), }),)
+        fieldsets += ((_('TLS configuration'), { 'classes': ('wide',), 'fields': ('tls', 'certificate', 'certificate_path', 'certificate_content', ),}),)
+        fieldsets += ((_('Groups and permissions'), { 'classes': ('wide',), 'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'permissions', ),}),)
         filter_horizontal = ('groups', 'permissions')
-        list_display = ('name', 'method', 'enable', 'is_active', 'is_staff', 'is_superuser', 'status', 'ldap_certificate')
+        list_display = ('name', 'method', 'enable', 'is_active', 'is_staff', 'is_superuser', 'status', 'admin_button_check')
         list_filter = ('method', 'enable',)
         search_fields = ('name',)
-        readonly_fields = OverConfig.readonly_fields
+        readonly_fields = OverConfig.readonly_fields+('certificate_path', 'certificate_content', )
         method_accepted = ['ldap',]
         fields_detail = ['id', 'method', 'name', 'is_active', 'is_staff', 'is_superuser', 'groups', 'permissions']
         fields_groups = ['id', 'name']
         fields_permissions = ['id', '__str__']
+        view_absolute = '{}:MethodDetail'
+        error_function_invalid = _("Invalid function")
 
 #██╗     ██████╗  █████╗ ██████╗ 
 #██║     ██╔══██╗██╔══██╗██╔══██╗
@@ -269,7 +283,6 @@ class Config(OverConfig):
         name = 'LDAP'
         option = _('LDAP')
         host = 'localhost'
-        port = 389
         scope = 'SCOPE_BASE'
         version = 'VERSION3'
         choices_scope = (('SCOPE_BASE', 'base (scope=base)'), ('SCOPE_ONELEVEL', 'onelevel (scope=onelevel)'), ('SCOPE_SUBTREE', 'subtree (scope=subtree)'))
@@ -277,12 +290,9 @@ class Config(OverConfig):
         certificates = '{}/{}'
         fieldsets = ((_('LDAP method'), {
             'classes': ('collapse',),
-            'fields': ('ldap_host', 'ldap_port', 'ldap_tls', 'ldap_cert', 'ldap_certificate', 'ldap_define', 'ldap_scope', 'ldap_version', 'ldap_bind', 'ldap_password', 'ldap_user', 'ldap_search',),}),)
-        readonly_fields = ('ldap_certificate',)
+            'fields': ('ldap_host', 'ldap_define', 'ldap_scope', 'ldap_version', 'ldap_bind', 'ldap_password', 'ldap_user', 'ldap_search',),}),)
+        readonly_fields = ('certificate_content', 'certificate_path', )
         vn_ldap_host = _('Use hostname or IP address')
-        vn_ldap_port = _('Port')
-        vn_ldap_tls = _('Option TLS')
-        vn_ldap_cert = _('Certificat LDAP')
         vn_ldap_define = _('Base DN ex: dc=domain,dc=com')
         vn_ldap_version = _('Version')
         vn_ldap_scope = _('Scope')
@@ -293,7 +303,6 @@ class Config(OverConfig):
         ht_ldap_host = _('Hostname/IP')
         ht_ldap_port = _('Keep 389 to use default port')
         ht_ldap_tls = _('Use option TLS')
-        ht_ldap_cert = _('Uploade here the certificat to check')
         ht_ldap_define = _('Base DN')
         ht_ldap_scope = _('Choice a scope. The command will be like "scope=***"')
         ht_ldap_version = _('Choice a version')
@@ -301,6 +310,7 @@ class Config(OverConfig):
         ht_ldap_password = _('Password used by the bind')
         ht_ldap_user = _('Replace root DN by a User DN. <strong>Do not use with root DN</strong> | user DN ex : uid={{tag}},ou=my-ou,dc=domain,dc=com | Available tags: username,email')
         ht_ldap_search = _('search DN (LDAP filter) ex : (&(uid={{tag}})(memberof=cn=my-cn,ou=groups,dc=hub-t,dc=net)) | Available tags: username,email')
+        err_not_exist = 'UserDoesNotExist'
 
         def dir_cert(instance, filename):
             return self.certificates.format(conf.dir_cert, instance.name)
@@ -404,6 +414,9 @@ class AuthentaConfig(AppConfig, Config):
         self.logger('debug', 'Choices method: {}'.format(self.Method.choices))
         self.Task.view_absolute = self.Task.view_absolute.format(self.App.namespace)
         self.Task.purge_number+=1
+
+    def formatter(self):
+        return { 'name': self.name, 'regex_extension': self.Extension.regex }
 
 
 #██╗      ██████╗  ██████╗  ██████╗ ███████╗██████╗ 
