@@ -6,7 +6,11 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from .apps import AuthentaConfig as conf
 from .manager import UserManager
 
-from .methods import (ldap as method_ldap)
+#if conf.ldap.activate: from .methods.ldap import methodLDAP as method_ldap
+if conf.ldap.activate: from .methods import ldap as method_ldap
+
+from . import methods
+
 
 import os, subprocess, unicodedata
 logger = conf.logger
@@ -66,6 +70,9 @@ class Method(Update):
         ldap_user = models.TextField(ldap_conf.vn_ldap_user, blank=True, help_text=ldap_conf.ht_ldap_user, null=True)
         ldap_search = models.TextField(ldap_conf.vn_ldap_search, help_text=ldap_conf.ht_ldap_search, blank=True, null=True)
     
+    def __str__(self):
+        return self.name
+
     def certificate_path(self):
         if self.certificate is not None:
             return '{}/{}_{}.crt'.format(conf.App.dir_cert, self.name, self.method)
@@ -89,9 +96,7 @@ class Method(Update):
 
     def method_get(self):
         logger('debug', 'method getting: {}'.format(self.method))
-        gettatr('method_{}'.format(self.method).lower(), 'method{}'.format(self.method))(self)
-        #if self.method == 'LDAP': self.obj = methodLDAP(self)
-        return self.obj
+        return getattr(getattr(methods, '{}'.format(self.method.lower())), 'method_{}'.format(self.method.lower()))(self)
 
     def admin_button_check(self):
         from django.urls import reverse

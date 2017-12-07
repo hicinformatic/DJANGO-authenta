@@ -1,0 +1,45 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls admin_list static authenta_filters %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/changelists.css" %}" />{% endblock %}
+
+{% if not is_popup %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; {% if has_change_permission %}<a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %}
+&rsaquo; {% if add %}{% blocktrans with name=opts.verbose_name %}Add {{ name }}{% endblocktrans %}{% else %}{{ original|truncatewords:"18" }}{% endif %}
+</div>
+{% endblock %}
+{% endif %}
+
+{% block content %}
+<div class="results" id="changelist">
+    <table id="result_list">
+        <thead>
+            <tr>
+                {% for field in fields %}
+                <th scope="col">
+                    <div class="text"><span>{{ field }}</span></div>
+                    <div class="clear"></div>
+                </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="row{{ object.id }}">
+            {% for field in fields %}
+                {% with object|getattribute:field as value %}<td class="field-{{ field }}">{{ value|boolean_icon }}</td>{% endwith %}
+            {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+    {% if object.error %}
+    <br/>
+    <ul class="messagelist">
+          <li class="error">{{ object.error }}</li>
+    </ul>
+    {% endif %}
+</div>
+{% endblock %}

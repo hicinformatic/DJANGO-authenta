@@ -1,7 +1,7 @@
 from .method import Method
 import ldap, socket
 
-class methodLDAP(Method):
+class method_ldap(Method):
     def __init__(self, method):
         self.method   = method
         self.conf     = method.ldap_conf
@@ -33,9 +33,11 @@ class methodLDAP(Method):
             if self.bind: cnx.simple_bind_s(self.bind, self.password)
             else: cnx.simple_bind_s()
             cnx.unbind_s()
+            self.method.error = None
+            self.method.save()
         except Exception as e:
             self.method.error = e
-            self.save()
+            self.method.save()
             return False
         return True
 

@@ -267,10 +267,14 @@ class Config(OverConfig):
         readonly_fields = OverConfig.readonly_fields+('certificate_path', 'certificate_content', )
         method_accepted = ['ldap',]
         fields_detail = ['id', 'method', 'name', 'is_active', 'is_staff', 'is_superuser', 'groups', 'permissions']
+        fields_detail_check = ['name', 'method', 'status']
         fields_groups = ['id', 'name']
         fields_permissions = ['id', '__str__']
+        template_name_admin_check = 'admin/method_check.html'
         view_absolute = '{}:MethodDetail'
-        error_function_invalid = _("Invalid function")
+        error_function_invalid = _('Invalid function')
+        info_method_check =_('The method works')
+        error_method_check =_('The method does not works')
 
 #██╗     ██████╗  █████╗ ██████╗ 
 #██║     ██╔══██╗██╔══██╗██╔══██╗

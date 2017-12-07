@@ -1,10 +1,11 @@
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.contrib import messages
 
 from .apps import AuthentaConfig as  conf
 from .decorators import howtoaccess
-from .hybridmixin import (HybridDetailView, HybridTemplateView, HybridListView, HybridCreateView, HybridUpdateView, FakeModel)
+from .hybridmixin import (HybridDetailView, HybridTemplateView, HybridListView, HybridCreateView, HybridUpdateView, FakeModel, HybridAdminView)
 from .models import (Method, Task)
 from .forms import MethodAdminForm
 
@@ -16,9 +17,16 @@ from datetime import datetime, timedelta
 #██║╚██╔╝██║██╔══╝     ██║   ██╔══██║██║   ██║██║  ██║
 #██║ ╚═╝ ██║███████╗   ██║   ██║  ██║╚██████╔╝██████╔╝
 #╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝
-class MethodAdminCheck(HybridDetailView):
+class MethodAdminCheck(HybridAdminView, HybridDetailView):
+    template_name = conf.Method.template_name_admin_check
     model = Method
-    fields_detail = ['name',]
+    fields_detail = conf.Method.fields_detail_check
+    
+    def get_context_data(self, **kwargs):
+        context = super(MethodAdminCheck, self).get_context_data(**kwargs)
+        method = self.object.method_get()
+        messages.info(self.request, self.object.method_conf.info_method_check) if method.check() else messages.error(self.request, self.object.method_conf.error_method_check)
+        return context
 
 @method_decorator(howtoaccess(conf.Task.host_authorized+['is_superuser','is_staff']), name='dispatch')
 class MethodFunction(HybridUpdateView):

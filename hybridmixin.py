@@ -222,3 +222,18 @@ class HybridCreateView(HybridForm, CreateView):
 # ╚═════╝ ╚═╝     ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝  ╚═══╝  ╚═╝╚══════╝ ╚══╝╚══╝
 class HybridUpdateView(HybridForm, UpdateView):
     pass
+
+class HybridAdminView(object):
+    def get_context_data(self, **kwargs):
+        from django.contrib import admin
+        from django.contrib.auth import get_permission_codename
+        context = super(HybridAdminView, self).get_context_data(**kwargs)
+        opts = self.model._meta
+        context.update({
+            'title': 'Check: {}'.format(self.get_object()),
+            'opts': opts,
+            'app_label': opts.app_label,
+            'original': self.get_object()
+        })
+        context.update(admin.site.each_context(self.request))
+        return context
