@@ -7,12 +7,13 @@ taskid = sys.argv[1]
 task = Task(taskid, scriptname)
 task.update('start', 'Started')
 
+
 import urllib.request, urllib.parse, json
-methods = 'authenta/method.json'
-check = 'authenta/method/function/{}.json'
+methods = task.getUrl('methods.json')
+check = 'method/function/{}.json'
 
 task.update('running', 'Get methods')
-with urllib.request.urlopen(task.getUrl(methods)) as url:
+with urllib.request.urlopen(methods) as url:
     methods = json.loads(url.read().decode())
     infos = {}
     for method in methods:
@@ -24,14 +25,16 @@ with urllib.request.urlopen(task.getUrl(methods)) as url:
         init = base.open(init)
         init = json.loads(init.read().decode('utf-8'))
         data = { 'function': 'check', }
-        data['csrfmiddlewaretoken'] = init['csrftoken']
+        data['csrfmiddlewaretoken'] = init['token']
         data = urllib.parse.urlencode(data).encode()
         try:
             curl = urllib.request.Request(checkurl, data=data)
             curl = base.open(curl)
-            print(curl.read())
             infos[method['id']]['status'] = curl.getcode()
+            data = json.loads(curl.read().decode())
+            infos[method['id']]['name'] = data['name']
+            infos[method['id']]['error'] = data['error']
         except Exception as e:
             infos[method['id']]['error'] = str(e)
-    
+ 
 task.update('complete', json.dumps(infos))

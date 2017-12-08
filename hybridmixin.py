@@ -133,6 +133,7 @@ class HybridForm(Hybrid):
   
     def get_success_url(self):
         if self.view_absolute is not None:
+            print('tototo')
             return reverse(self.view_absolute, kwargs={'pk': self.object.id, self.kwarg_extension: conf.Extension.url_template.format(self.extension)})
         return super(HybridForm, self).get_success_url()
   
@@ -229,11 +230,13 @@ class HybridAdminView(object):
         from django.contrib.auth import get_permission_codename
         context = super(HybridAdminView, self).get_context_data(**kwargs)
         opts = self.model._meta
+        has_change_permission = self.request.user.has_perm(opts.app_label + '.' + get_permission_codename('change', opts))
         context.update({
             'title': 'Check: {}'.format(self.get_object()),
             'opts': opts,
             'app_label': opts.app_label,
-            'original': self.get_object()
+            'original': self.get_object(),
+            'has_change_permission': has_change_permission
         })
         context.update(admin.site.each_context(self.request))
         return context

@@ -2,19 +2,19 @@ from django.apps import AppConfig
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 
-import datetime, syslog, os, hashlib, sys
+import datetime, syslog, os, hashlib, sys, random, string
 
 class OverConfig(object):
     fieldsets = ((_('Logs'), { 'classes': ('wide',), 'fields': ('update_by', 'date_create', 'date_update', 'error', ),}),)
     readonly_fields = ('update_by', 'date_create', 'date_update', 'error')
 
-    def __init__(self):
-        if hasattr(settings, self.settings_override):
-            settings_class = getattr(settings, self.settings_override)
-            if hasattr(settings_class, self.__class__.__name__):
-                settings_class = getattr(settings_class, self.__class__.__name__)
-                for key, value in settings_class.items():
-                    if hasattr(AuthentaConfig, k): setattr(AuthentaConfig, key, value)
+    #def __init__(self):
+    #    if hasattr(settings, self.settings_override):
+    #        settings_class = getattr(settings, self.settings_override)
+    #        if hasattr(settings_class, self.__class__.__name__):
+    #            settings_class = getattr(settings_class, self.__class__.__name__)
+    #            for key, value in settings_class.items():
+    #                if hasattr(AuthentaConfig, k): setattr(AuthentaConfig, key, value)
 
 class Config(OverConfig):
     settings_override = 'AUTHENTA'
@@ -47,7 +47,7 @@ class Config(OverConfig):
         hybrid_list = 'object_list' 
         hybrid_fields = 'fields'
         meta = '_meta'
-        meta_accepted = ['ManyToManyField', ]
+        meta_accepted = ['ManyToManyField', 'SimpleField']
         template_detail = 'authenta/detail.html'
         template_form = 'authenta/form.html'
         template_list = 'authenta/list.html'
@@ -123,7 +123,6 @@ class Config(OverConfig):
         txt = 'text/plain'
         csv = 'text/csv'
         xml = 'application/xml'
-
       
         csv_related_container = '[{}]'
         csv_related_separator = ' && '
@@ -215,14 +214,20 @@ class Config(OverConfig):
         filter_horizontal = ('groups', 'user_permissions', 'additional',)
         readonly_fields = ('date_joined', 'date_update', 'update_by')
         add_fieldsets = None
+        key_min_length = 10
+        key_max_length = 32
         fieldsets = (
             ((None, {'fields': ('username', 'password')})),
             ((_('Personal info'), {'fields': ('email', 'first_name', 'last_name')})),
             (_('Authentication method'), {'fields': ('method', 'additional')}),
             (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+            (_('API'), {'fields': ('key', )}),
             (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
             (_('Log informations'), {'fields': ('date_update', 'update_by')}),
         )
+
+        def key():
+            return ''.join(random.choice('#{}[]'+string.hexdigits) for x in range(Config.User.key_max_length))
 
 #███╗   ███╗███████╗████████╗██╗  ██╗ ██████╗ ██████╗ 
 #████╗ ████║██╔════╝╚══██╔══╝██║  ██║██╔═══██╗██╔══██╗
@@ -249,6 +254,7 @@ class Config(OverConfig):
         vn_permissions = _('Permissions associated')
         vn_certificate = _('TLS Certificate')
         vn_check = _('Check')
+        vn_self_signed = _('Self-signed')
         ht_port = _('Change the port used by the method')
         ht_tls = _('Enable or disable TLS')
         ht_certificate = _('Uploaded here the certificate to check')
@@ -257,22 +263,22 @@ class Config(OverConfig):
         ht_enable = _('Enable or disable the method')
         ht_certificate_content = _('Certificate content')
         ht_certificate_path = _('Certificate path')
+        ht_self_signed = _('Is the certificate self-signed?')
         fieldsets = ((_('Globals'), { 'fields': ('method', 'name', 'port', 'enable',), }),)
-        fieldsets += ((_('TLS configuration'), { 'classes': ('wide',), 'fields': ('tls', 'certificate', 'certificate_path', 'certificate_content', ),}),)
+        fieldsets += ((_('TLS configuration'), { 'classes': ('wide',), 'fields': ('tls', 'certificate', 'self_signed', 'certificate_path', 'certificate_content', ),}),)
         fieldsets += ((_('Groups and permissions'), { 'classes': ('wide',), 'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'permissions', ),}),)
         filter_horizontal = ('groups', 'permissions')
-        list_display = ('name', 'method', 'enable', 'is_active', 'is_staff', 'is_superuser', 'status', 'admin_button_check')
+        list_display = ('name', 'method', 'enable', 'is_active', 'is_staff', 'is_superuser', 'status','admin_button_check')
         list_filter = ('method', 'enable',)
         search_fields = ('name',)
         readonly_fields = OverConfig.readonly_fields+('certificate_path', 'certificate_content', )
         method_accepted = ['ldap',]
-        fields_detail = ['id', 'method', 'name', 'is_active', 'is_staff', 'is_superuser', 'groups', 'permissions']
-        fields_detail_check = ['name', 'method', 'status']
+        fields_detail = ['id', 'method', 'name', 'is_active', 'is_staff', 'is_superuser', 'groups', 'permissions', 'error']
         fields_groups = ['id', 'name']
         fields_permissions = ['id', '__str__']
         template_name_admin_check = 'admin/method_check.html'
         view_absolute = '{}:MethodDetail'
-        error_function_invalid = _('Invalid function')
+        error_function_invalid = _('Invalid function: %(function)s')
         info_method_check =_('The method works')
         error_method_check =_('The method does not works')
 
@@ -292,6 +298,7 @@ class Config(OverConfig):
         choices_scope = (('SCOPE_BASE', 'base (scope=base)'), ('SCOPE_ONELEVEL', 'onelevel (scope=onelevel)'), ('SCOPE_SUBTREE', 'subtree (scope=subtree)'))
         choices_version = (('VERSION2', 'Version 2 (LDAPv2)'), ('VERSION3', 'Version 3 (LDAPv3)'))
         certificates = '{}/{}'
+        tls_cacertfile = False
         fieldsets = ((_('LDAP method'), {
             'classes': ('collapse',),
             'fields': ('ldap_host', 'ldap_define', 'ldap_scope', 'ldap_version', 'ldap_bind', 'ldap_password', 'ldap_user', 'ldap_search',),}),)
@@ -315,6 +322,7 @@ class Config(OverConfig):
         ht_ldap_user = _('Replace root DN by a User DN. <strong>Do not use with root DN</strong> | user DN ex : uid={{tag}},ou=my-ou,dc=domain,dc=com | Available tags: username,email')
         ht_ldap_search = _('search DN (LDAP filter) ex : (&(uid={{tag}})(memberof=cn=my-cn,ou=groups,dc=hub-t,dc=net)) | Available tags: username,email')
         err_not_exist = 'UserDoesNotExist'
+        fields = ['ldap_host', 'ldap_define', 'ldap_scope', 'ldap_version', 'ldap_bind', 'ldap_password', 'ldap_user', 'ldap_search',]
 
         def dir_cert(instance, filename):
             return self.certificates.format(conf.dir_cert, instance.name)
@@ -346,7 +354,7 @@ class Config(OverConfig):
         script_tasks = (
             ('purge_tasks',  _('Purge tasks')),
             ('check_methods',  _('Check methods')),
-            ('cache_methods',  _('Generate cache')),
+            ('cache_methods',  _('Generate method caches')),
         )
         list_display = ('task', 'status')
         fieldsets = ((_('Globals'), { 'fields': ('task', 'status', 'info', 'error', 'command', 'local_check'), }),)
@@ -418,6 +426,7 @@ class AuthentaConfig(AppConfig, Config):
         self.logger('debug', 'Choices method: {}'.format(self.Method.choices))
         self.Task.view_absolute = self.Task.view_absolute.format(self.App.namespace)
         self.Task.purge_number+=1
+        self.Method.view_absolute = self.Method.view_absolute.format(self.App.namespace)
 
     def formatter(self):
         return { 'name': self.name, 'regex_extension': self.Extension.regex }

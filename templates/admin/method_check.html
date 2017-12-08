@@ -9,7 +9,10 @@
 <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
 &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
 &rsaquo; {% if has_change_permission %}<a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %}
-&rsaquo; {% if add %}{% blocktrans with name=opts.verbose_name %}Add {{ name }}{% endblocktrans %}{% else %}{{ original|truncatewords:"18" }}{% endif %}
+&rsaquo; {% if add %}{% blocktrans with name=opts.verbose_name %}Add {{ name }}{% endblocktrans %}{% else %}
+{% if has_change_permission %}<a href="{% url opts|admin_urlname:'change' object.id %}">{{ original|truncatewords:"18" }}</a>{% else %}{{ original|truncatewords:"18" }}{% endif %}
+{% endif %}
+&rsaquo; Check
 </div>
 {% endblock %}
 {% endif %}
@@ -20,26 +23,108 @@
         <thead>
             <tr>
                 {% for field in fields %}
+                {% if field != 'error' %}
                 <th scope="col">
                     <div class="text"><span>{{ field }}</span></div>
                     <div class="clear"></div>
                 </th>
+                {% endif %}
                 {% endfor %}
             </tr>
         </thead>
         <tbody>
             <tr class="row{{ object.id }}">
             {% for field in fields %}
-                {% with object|getattribute:field as value %}<td class="field-{{ field }}">{{ value|boolean_icon }}</td>{% endwith %}
+                {% getattribute object field as value %}
+                {% if field != 'error' %}
+                {% if field == 'id' %}
+                <td class="field-{{ field }}">{{ value }}</td>
+                {% elif field == 'groups' %}
+                <td class="field-{{ field }}">
+                    {% if object.groups %}
+                    <ul>{% for group in object.groups.all %}<li>{{ group }}</li>{% endfor %}</ul>
+                    {% else %}
+                    {{ False|boolean_icon }}
+                    {% endif %}
+                </td>
+                {% elif field == 'permissions' %}
+                <td class="field-{{ field }}">
+                    {% if object.permissions == None %}
+                    <ul>{% for group in object.permissions.all %}<li>{{ permissions }}</li>{% endfor %}</ul>
+                    {% else %}
+                    {{ False|boolean_icon }}
+                    {% endif %}
+                </td>
+                {% else %}
+                <td class="field-{{ field }}">{{ value|boolean_icon }}</td>
+                {% endif %}
+                {% endif %}
             {% endfor %}
             </tr>
         </tbody>
     </table>
+
     {% if object.error %}
     <br/>
     <ul class="messagelist">
           <li class="error">{{ object.error }}</li>
     </ul>
+    {% endif %}
+
+    <br/>
+    <table id="result_list">
+        <thead>
+            <tr>
+                <th scope="col">
+                    <div class="text"><span>{% trans 'Name' %}</span></div>
+                    <div class="clear"></div>
+                </th>
+                <th scope="col">
+                    <div class="text"><span>{% trans 'Default' %}</span></div>
+                    <div class="clear"></div>
+                </th>
+                <th scope="col">
+                    <div class="text"><span>{% trans 'Configured' %}</span></div>
+                    <div class="clear"></div>
+                </th>
+            </tr>
+        </thead>
+        <thead>
+            {% for field in method_fields %}
+            <tr class="row{{ object.id }}">
+                <th>
+                    {% getattribute object field as value %}
+                    <div class="text"><span>{% getattribute_field object field 'verbose_name' %}</span></div>
+                    <div class="clear"></div></th>
+                    <td>{% getattribute_field object field 'default' %}</td>
+                    <td>{{ value|boolean_icon }}</td>
+                </th>
+            </tr>
+            {% endfor %}
+        </thead>
+    </table>
+
+    <br/>
+    {% if object.certificate %}
+    <table id="result_list">
+        <thead>
+            <tr class="row{{ object.id }}">
+                <th>
+                    <div class="text"><span>{% trans 'Certificate path' %}</span></div>
+                    <div class="clear"></div></th>
+                    <td>{{ object.certificate_path }}</td>
+                </th>
+            </tr>
+            <tr>
+                <th><div class="text"><span>{% trans 'Certificate in database' %}<div class="clear"></div></th>
+                <th><div class="text"><span>{% trans 'Content in file' %}<div class="clear"></div></th>
+            </tr>
+            <tr>
+                <td><pre>{{ object.certificate }}</pre></td>
+                <td><pre>{{ object.certificate_content }}</pre></td>
+            </tr>
+        </thead>
+    </table>
     {% endif %}
 </div>
 {% endblock %}

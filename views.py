@@ -7,7 +7,7 @@ from .apps import AuthentaConfig as  conf
 from .decorators import howtoaccess
 from .hybridmixin import (HybridDetailView, HybridTemplateView, HybridListView, HybridCreateView, HybridUpdateView, FakeModel, HybridAdminView)
 from .models import (Method, Task)
-from .forms import MethodAdminForm
+from .forms import MethodAdminForm, MethodFormFunction
 
 from datetime import datetime, timedelta
 
@@ -20,24 +20,30 @@ from datetime import datetime, timedelta
 class MethodAdminCheck(HybridAdminView, HybridDetailView):
     template_name = conf.Method.template_name_admin_check
     model = Method
-    fields_detail = conf.Method.fields_detail_check
+    fields_detail = conf.Method.fields_detail
+    groups = conf.Method.fields_groups
+    permissions = conf.Method.fields_permissions
     
     def get_context_data(self, **kwargs):
         context = super(MethodAdminCheck, self).get_context_data(**kwargs)
         method = self.object.method_get()
-        messages.info(self.request, self.object.method_conf.info_method_check) if method.check() else messages.error(self.request, self.object.method_conf.error_method_check)
+        if self.extension == conf.Extension.default_extension:
+            messages.info(self.request, self.object.method_conf.info_method_check) if method.check() else messages.error(self.request, self.object.method_conf.error_method_check)
+        context.update({'method_fields': getattr(conf, self.object.method.lower()).fields  })
         return context
 
 @method_decorator(howtoaccess(conf.Task.host_authorized+['is_superuser','is_staff']), name='dispatch')
 class MethodFunction(HybridUpdateView):
     model = Method
-    form_class = MethodAdminForm
+    form_class = MethodFormFunction
     view_absolute = conf.Method.view_absolute
 
 @method_decorator(howtoaccess(conf.Task.host_authorized+['is_superuser','is_staff']), name='dispatch')
 class MethodDetail(HybridDetailView):
     model = Method
-    fields_detail = ['name',]
+    fields_detail = conf.Method.fields_detail
+    groups = conf.Method.fields_groups
+    permissions = conf.Method.fields_permissions
 
 @method_decorator(howtoaccess(conf.Task.host_authorized+['is_superuser','is_staff']), name='dispatch')
 class MethodList(HybridListView):
@@ -45,7 +51,7 @@ class MethodList(HybridListView):
     template_name = conf.App.template_list
     fields_detail = conf.Method.fields_detail
     groups = conf.Method.fields_groups
-    permissins = conf.Method.fields_permissions
+    permissions = conf.Method.fields_permissions
 
 
 

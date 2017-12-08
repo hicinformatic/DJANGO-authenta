@@ -1,18 +1,16 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import AbstractUser, Group, Permission
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, MinLengthValidator, MaxLengthValidator
 
 from .apps import AuthentaConfig as conf
 from .manager import UserManager
-
-#if conf.ldap.activate: from .methods.ldap import methodLDAP as method_ldap
-if conf.ldap.activate: from .methods import ldap as method_ldap
-
 from . import methods
 
+if conf.ldap.activate: from .methods import ldap as method_ldap
 
-import os, subprocess, unicodedata
+import os, subprocess, unicodedata, time
+
 logger = conf.logger
 
 #██╗   ██╗██████╗ ██████╗  █████╗ ████████╗███████╗
@@ -52,6 +50,7 @@ class Method(Update):
     
     tls = models.BooleanField(method_conf.vn_tls, default=False, help_text=method_conf.ht_tls)
     certificate = models.TextField(method_conf.vn_certificate, blank=True, help_text=method_conf.ht_certificate, null=True)
+    self_signed = models.BooleanField(method_conf.vn_self_signed, default=False, help_text=method_conf.ht_self_signed)
     
     is_active = models.BooleanField(method_conf.vn_is_active, default=True)
     is_staff = models.BooleanField(method_conf.vn_is_staff, default=False)
@@ -69,9 +68,14 @@ class Method(Update):
         ldap_password = models.CharField(ldap_conf.vn_ldap_password, blank=True, help_text=ldap_conf.ht_ldap_password, max_length=254, null=True)
         ldap_user = models.TextField(ldap_conf.vn_ldap_user, blank=True, help_text=ldap_conf.ht_ldap_user, null=True)
         ldap_search = models.TextField(ldap_conf.vn_ldap_search, help_text=ldap_conf.ht_ldap_search, blank=True, null=True)
+        ldap_tls_cacertfile = ldap_conf.tls_cacertfile
     
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        super(Method, self).save(*args, **kwargs)
+        self.certificate_content()
 
     def certificate_path(self):
         if self.certificate is not None:
@@ -83,12 +87,21 @@ class Method(Update):
         certificate = self.certificate_path()
         if certificate is not None:
             if not os.path.isfile(certificate):
-                with open(certificate, 'w') as cert_file:
-                    cert_file.write(self.certificate)
-                cert_file.closed
-            return self.certificate
+                self.certificate_write(certificate)
+            else:
+                timestamp_file = os.path.getctime(certificate)
+                timestamp_date_update = int(time.mktime(self.date_update.timetuple()))
+                if timestamp_file < timestamp_date_update:
+                    self.certificate_write(certificate)
+                content = open(certificate, 'r').read()
+            return content
         return None
     certificate_content.short_description = method_conf.ht_certificate_content
+
+    def certificate_write(self, certificate):
+        with open(certificate, 'w') as cert_file:
+            cert_file.write(self.certificate)
+        cert_file.closed
 
     class Meta:
         verbose_name = conf.Method.verbose_name
@@ -111,6 +124,8 @@ class Method(Update):
 #██║   ██║╚════██║██╔══╝  ██╔══██╗
 #╚██████╔╝███████║███████╗██║  ██║
 # ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝
+
+
 class User(AbstractUser):
     conf_user = conf.User
     username = models.CharField(conf_user.vn_username, blank=conf_user.null_username, max_length=254, null=conf_user.null_username, unique=conf_user.unique_username, validators=[AbstractUser.username_validator],)
@@ -124,6 +139,7 @@ class User(AbstractUser):
     update_by = models.CharField(conf.App.vn_update_by, editable=False, max_length=254)
     method = models.CharField(conf_user.vn_method, choices=conf_user.choices_user_create_method, default=conf_user.default_method, max_length=15)
     additional = models.ManyToManyField(Method, blank=True)
+    key = models.CharField(default=conf.User.key, max_length=32, unique=True, validators=[MaxLengthValidator(conf_user.key_max_length), MinLengthValidator(conf_user.key_min_length),], verbose_name=_('Authentication key'),)
 
     objects = UserManager()
     USERNAME_FIELD = conf_user.unique_identity

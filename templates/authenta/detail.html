@@ -1,6 +1,6 @@
 {% load authenta_filters %}
 <ul>
     {% for field in fields %}
-    <li>{{ object|getattribute:field }}</li>
+    <li>{% getattribute object field %}</li>
     {% endfor %}
 </ul>

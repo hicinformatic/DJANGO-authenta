@@ -39,11 +39,9 @@ class CustomUserAdmin(OverAdmin, UserAdmin):
 
 #admin.site.unregister(Group)
 @admin.register(CustomGroup)
-class CustomGroup(OverAdmin, GroupAdmin):
-    list_display = conf.Group.list_display
-    filter_horizontal = conf.Group.filter_horizontal
-    readonly_fields = conf.Group.readonly_fields
-    fieldsets = conf.Group.fieldsets
+class CustomGroup(GroupAdmin):
+    filter_horizontal = ('permissions',)
+
 
 from django.http import (HttpResponse, JsonResponse)
 from django.conf.urls import url
