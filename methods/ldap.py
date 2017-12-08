@@ -3,8 +3,8 @@ import ldap, socket
 
 class method_ldap(Method):
     def __init__(self, method):
+        print('toto ldap')
         self.method   = method
-        self.conf     = method.ldap_conf
         self.port     = method.port
         self.tls      = method.tls
         self.host     = method.ldap_host

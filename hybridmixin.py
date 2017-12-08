@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.http import (HttpResponse, JsonResponse)
 from django.middleware.csrf import get_token
+from django.contrib import admin
+from django.contrib.auth import get_permission_codename
 
 from django.views.generic import (DetailView, TemplateView)
 from django.views.generic.edit import (CreateView, UpdateView)
@@ -44,7 +46,7 @@ class Hybrid(object):
     def dispatch(self, request, *args, **kwargs):
         if self.kwarg_extension in self.kwargs and self.kwargs[self.kwarg_extension] is not None:
             self.extension = self.kwargs[self.kwarg_extension]
-        self.response = 'response_{}'.format(self.extension)
+        self.response = conf.ContentType.response.format(self.extension)
         logger('debug', self.extension)
         return super(Hybrid, self).dispatch(request)
 
@@ -133,7 +135,6 @@ class HybridForm(Hybrid):
   
     def get_success_url(self):
         if self.view_absolute is not None:
-            print('tototo')
             return reverse(self.view_absolute, kwargs={'pk': self.object.id, self.kwarg_extension: conf.Extension.url_template.format(self.extension)})
         return super(HybridForm, self).get_success_url()
   
@@ -226,13 +227,10 @@ class HybridUpdateView(HybridForm, UpdateView):
 
 class HybridAdminView(object):
     def get_context_data(self, **kwargs):
-        from django.contrib import admin
-        from django.contrib.auth import get_permission_codename
         context = super(HybridAdminView, self).get_context_data(**kwargs)
         opts = self.model._meta
-        has_change_permission = self.request.user.has_perm(opts.app_label + '.' + get_permission_codename('change', opts))
+        has_change_permission = self.request.user.has_perm('{}.{}'.format(opts.app_label, get_permission_codename('change', opts)))
         context.update({
-            'title': 'Check: {}'.format(self.get_object()),
             'opts': opts,
             'app_label': opts.app_label,
             'original': self.get_object(),

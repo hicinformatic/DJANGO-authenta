@@ -61,6 +61,12 @@ class Config(OverConfig):
 #███████╗╚██████╔╝╚██████╔╝
 #╚══════╝ ╚═════╝  ╚═════╝   
     class Log(OverConfig):
+        verbose_name = _('# Log')
+        verbose_name_plural = _('# Logs')
+        list_display = ('user', 'date_create')
+        fieldsets = ((_('Globals'), { 'fields': ('user', ), }),)
+        fieldsets += OverConfig.fieldsets
+        readonly_fields = OverConfig.readonly_fields
         log_type = 'console'
         log_level = 7
         format_syslog = '[{}] {}'
@@ -86,7 +92,7 @@ class Config(OverConfig):
         info_code = 6
         info_color = '\033[0;94m'
         debug_code = 7
-        debug_color = '\033[0;30;5;100m'     
+        debug_color = '\033[0;30;5;100m' 
 
 #███████╗██╗  ██╗████████╗███████╗███╗   ██╗███████╗██╗ ██████╗ ███╗   ██╗
 #██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝████╗  ██║██╔════╝██║██╔═══██╗████╗  ██║
@@ -116,6 +122,7 @@ class Config(OverConfig):
 #╚██████╗╚██████╔╝██║ ╚████║   ██║   ███████╗██║ ╚████║   ██║      ██║      ██║   ██║     ███████╗
 # ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝   ╚═╝      ╚═╝      ╚═╝   ╚═╝     ╚══════╝
     class ContentType(OverConfig):
+        response = 'response_{}'
         charset = 'utf-8'
         html = 'text/html'
         js = 'application/javascript'
@@ -137,7 +144,6 @@ class Config(OverConfig):
         txt_related_separator = ' && '
         txt_related_subtemplate = '{}={}'
         txt_related_subseparator = ';;'
-
 
 # █████╗ ██████╗ ███╗   ███╗██╗███╗   ██╗
 #██╔══██╗██╔══██╗████╗ ████║██║████╗  ██║
@@ -226,9 +232,6 @@ class Config(OverConfig):
             (_('Log informations'), {'fields': ('date_update', 'update_by')}),
         )
 
-        def key():
-            return ''.join(random.choice('#{}[]'+string.hexdigits) for x in range(Config.User.key_max_length))
-
 #███╗   ███╗███████╗████████╗██╗  ██╗ ██████╗ ██████╗ 
 #████╗ ████║██╔════╝╚══██╔══╝██║  ██║██╔═══██╗██╔══██╗
 #██╔████╔██║█████╗     ██║   ███████║██║   ██║██║  ██║
@@ -273,7 +276,12 @@ class Config(OverConfig):
         search_fields = ('name',)
         readonly_fields = OverConfig.readonly_fields+('certificate_path', 'certificate_content', )
         method_accepted = ['ldap',]
-        fields_detail = ['id', 'method', 'name', 'is_active', 'is_staff', 'is_superuser', 'groups', 'permissions', 'error']
+        fields_detail = [
+            'id', 'method', 'name', 'port', 
+            'tls', 'self_signed',
+            'is_active', 'is_staff', 'is_superuser', 'groups', 'permissions', 
+            'error'
+        ]
         fields_groups = ['id', 'name']
         fields_permissions = ['id', '__str__']
         template_name_admin_check = 'admin/method_check.html'
@@ -326,6 +334,14 @@ class Config(OverConfig):
 
         def dir_cert(instance, filename):
             return self.certificates.format(conf.dir_cert, instance.name)
+
+    class api(OverConfig):
+        backend = 'user.authenta.api'
+        field_is_api = 'is_api'
+        ht_is_api = _('can access API mode')
+
+        def key(key_max_length):
+            return ''.join(random.choice('-._~+/'+string.hexdigits) for x in range(key_max_length))
 
 #████████╗ █████╗ ███████╗██╗  ██╗
 #╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝

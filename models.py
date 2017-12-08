@@ -11,6 +11,7 @@ if conf.ldap.activate: from .methods import ldap as method_ldap
 
 import os, subprocess, unicodedata, time
 
+
 logger = conf.logger
 
 #██╗   ██╗██████╗ ██████╗  █████╗ ████████╗███████╗
@@ -139,7 +140,7 @@ class User(AbstractUser):
     update_by = models.CharField(conf.App.vn_update_by, editable=False, max_length=254)
     method = models.CharField(conf_user.vn_method, choices=conf_user.choices_user_create_method, default=conf_user.default_method, max_length=15)
     additional = models.ManyToManyField(Method, blank=True)
-    key = models.CharField(default=conf.User.key, max_length=32, unique=True, validators=[MaxLengthValidator(conf_user.key_max_length), MinLengthValidator(conf_user.key_min_length),], verbose_name=_('Authentication key'),)
+    key = models.CharField(default=conf.api.key(conf_user.key_max_length), max_length=32, unique=True, validators=[MaxLengthValidator(conf_user.key_max_length), MinLengthValidator(conf_user.key_min_length),], verbose_name=_('Authentication key'),)
 
     objects = UserManager()
     USERNAME_FIELD = conf_user.unique_identity
@@ -148,6 +149,10 @@ class User(AbstractUser):
     class Meta:
         verbose_name = conf.User.verbose_name
         verbose_name_plural = conf.User.verbose_name_plural
+
+        permissions = (
+            (conf.api.field_is_api, conf.api.ht_is_api),
+        )
 
     def clean(self):
         super(AbstractUser, self).clean()
@@ -227,3 +232,9 @@ class Task(Update):
             logger('debug', 'start_task failed: {}'.format(error))
         return False
         
+class Log(Update):
+    user = models.CharField(max_length=254, editable=False, verbose_name=getattr(conf.User, 'vn_{}'.format(conf.User.unique_identity)))
+
+    class Meta:
+        verbose_name        = conf.Log.verbose_name
+        verbose_name_plural = conf.Log.verbose_name_plural

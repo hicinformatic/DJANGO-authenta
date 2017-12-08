@@ -5,18 +5,55 @@ from django.contrib.admin import sites
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
 
 from .forms import MethodAdminForm
-from .models import (Method, Group as CustomGroup, User as CustomUser, Task)
+from .models import (Method, Group as CustomGroup, User as CustomUser, Task, Log)
 
+from django.views.decorators.cache import never_cache
+from django.utils.translation import ugettext_lazy as _
 class AuthentaAdminSite(admin.AdminSite):
     site_header = conf.Admin.site_header
     index_title = conf.Admin.index_title
 
-    #def get_urls(self):
-    #    from django.urls import reverse
-    #    from django.conf.urls import url
-    #    urlpatterns = super(AuthentaAdminSite, self).get_urls()
-    #    urlpatterns.append(url(r'(?P<id>\d+)/check/$', MethodAdmin.check,),)
-    #    return urlpatterns
+    @never_cache
+    def login(self, request, extra_context=None):
+        from django.contrib.auth import REDIRECT_FIELD_NAME
+        from django.core.urlresolvers import resolve
+        from django.urls import reverse
+        current_url = resolve(request.path_info).url_name
+
+        if request.method == 'GET' and self.has_permission(request):
+            index_path = reverse('admin:index', current_app=self.name)
+            return HttpResponseRedirect(index_path)
+
+        from django.contrib.auth.views import LoginView
+        from django.contrib.admin.forms import AdminAuthenticationForm
+        context = dict(
+            self.each_context(request),
+            title=_('Log in'),
+            app_path=request.get_full_path(),
+            username=request.user.get_username(),
+            current_url=current_url,
+        )
+        if (REDIRECT_FIELD_NAME not in request.GET and REDIRECT_FIELD_NAME not in request.POST):
+            context[REDIRECT_FIELD_NAME] = reverse('admin:index', current_app=self.name)
+        context.update(extra_context or {})
+        context.update({ 'ldap' : conf.ldap.activate })
+        
+        from .forms import AuthenticationLDAPForm
+        from django.contrib.admin.forms import AdminAuthenticationForm
+        login_form = AuthenticationLDAPForm if current_url == 'ldap_login' else AdminAuthenticationForm
+
+        defaults = {
+            'extra_context': context,
+            'authentication_form': self.login_form or login_form,
+            'template_name': self.login_template or 'admin/login.html',
+        }
+        request.current_app = self.name
+        return LoginView.as_view(**defaults)(request)
+
+    def get_urls(self):
+        urlpatterns = super(AuthentaAdminSite, self).get_urls()
+        urlpatterns.append(url(r'^login/ldap/$', self.login, name='ldap_login'))
+        return urlpatterns
 
 mysite = AuthentaAdminSite()
 admin.site = mysite
@@ -73,3 +110,12 @@ class TaskAdmin(OverAdmin, admin.ModelAdmin):
     fieldsets = conf.Task.fieldsets
     list_display = conf.Task.list_display
     readonly_fields = conf.Task.readonly_fields
+
+@admin.register(Log)
+class LogAdmin(OverAdmin, admin.ModelAdmin):
+    fieldsets = conf.Log.fieldsets
+    list_display = conf.Log.list_display
+    readonly_fields = conf.Log.readonly_fields
+
+    def has_add_permission(self, request):
+        return False
