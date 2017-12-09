@@ -23,7 +23,7 @@
         <thead>
             <tr>
                 {% for field in fields %}
-                {% if field != 'error' %}
+                {% if field != 'error' and field != 'certificate' and field != 'certificate_path' and field != 'tls' and field != 'self_signed' %}
                 <th scope="col">
                     <div class="text"><span>{{ field }}</span></div>
                     <div class="clear"></div>
@@ -36,7 +36,7 @@
             <tr class="row{{ object.id }}">
             {% for field in fields %}
                 {% getattribute object field as value %}
-                {% if field != 'error' %}
+                {% if field != 'error' and field != 'certificate' and field != 'certificate_path' and field != 'tls' and field != 'self_signed' %}
                 {% if field == 'id' %}
                 <td class="field-{{ field }}">{{ value }}</td>
                 {% elif field == 'groups' %}
@@ -105,10 +105,24 @@
     </table>
 
     <br/>
-    {% if object.certificate %}
     <table id="result_list">
         <thead>
-            <tr class="row{{ object.id }}">
+            <tr>
+                <th>
+                    <div class="text"><span>{% trans 'TLS enable' %}</span></div>
+                    <div class="clear"></div></th>
+                    <td>{{ object.tls|boolean_icon }}</td>
+                </th>
+            </tr>
+            {% if object.certificate %}
+            <tr>
+                <th>
+                    <div class="text"><span>{% trans 'Certificate self signed' %}</span></div>
+                    <div class="clear"></div></th>
+                    <td>{{ object.self_signed|boolean_icon }}</td>
+                </th>
+            </tr>
+            <tr>
                 <th>
                     <div class="text"><span>{% trans 'Certificate path' %}</span></div>
                     <div class="clear"></div></th>
@@ -123,8 +137,8 @@
                 <td><pre>{{ object.certificate }}</pre></td>
                 <td><pre>{{ object.certificate_content }}</pre></td>
             </tr>
+        {% endif %}
         </thead>
     </table>
-    {% endif %}
 </div>
 {% endblock %}

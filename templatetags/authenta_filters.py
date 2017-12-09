@@ -3,6 +3,7 @@ from django.conf import settings
 from django.templatetags.static import static
 from django.utils.html import format_html
 from django.db.models.fields import NOT_PROVIDED
+from django.core.exceptions import FieldDoesNotExist
 
 import re
 numeric_test = re.compile("^\d+$")
@@ -15,12 +16,17 @@ def boolean_icon(field_val):
 
 @register.simple_tag(name='getattribute_field')
 def getattribute_field(instance, field_name, attribute):
-    field = instance._meta.get_field(field_name)
-    if field and hasattr(field, attribute):
-        attr = getattr(field, attribute)
+    try:
+        field = instance._meta.get_field(field_name)
+        if field and hasattr(field, attribute):
+            attr = getattr(field, attribute)
+            if attribute == 'verbose_name':
+                return attr.title() 
+            return attr if attr is not NOT_PROVIDED else boolean_icon(None)
+    except FieldDoesNotExist:
         if attribute == 'verbose_name':
-            return attr.title() 
-        return attr if attr is not NOT_PROVIDED else boolean_icon(None)
+            return field_name
+        return getattribute(instance, field_name)
     return boolean_icon(None)
 
 @register.simple_tag(name='getattribute')

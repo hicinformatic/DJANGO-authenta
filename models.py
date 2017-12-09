@@ -48,27 +48,31 @@ class Method(Update):
     name = models.CharField(method_conf.vn_name, help_text=method_conf.ht_name, max_length=254)
     enable = models.BooleanField(method_conf.vn_enable, default=True, help_text=method_conf.ht_enable)
     port = models.PositiveIntegerField(method_conf.vn_port, blank=True, default=method_conf.port, help_text=method_conf.ht_port, null=True, validators=[MinValueValidator(0), MaxValueValidator(65535)])
-    
+
     tls = models.BooleanField(method_conf.vn_tls, default=False, help_text=method_conf.ht_tls)
     certificate = models.TextField(method_conf.vn_certificate, blank=True, help_text=method_conf.ht_certificate, null=True)
     self_signed = models.BooleanField(method_conf.vn_self_signed, default=False, help_text=method_conf.ht_self_signed)
-    
+
     is_active = models.BooleanField(method_conf.vn_is_active, default=True)
     is_staff = models.BooleanField(method_conf.vn_is_staff, default=False)
     is_superuser = models.BooleanField(method_conf.vn_superuser, default=False)
     groups = models.ManyToManyField(Group, verbose_name=method_conf.vn_groups, blank=True)
     permissions = models.ManyToManyField(Permission, verbose_name=method_conf.vn_permissions, blank=True)
 
+    field_firstname = models.CharField(method_conf.vn_field_firstname, blank=True, help_text=method_conf.ht_field, max_length=254, null=True)
+    field_lastname = models.CharField(method_conf.vn_field_lastname, blank=True, help_text=method_conf.ht_field, max_length=254, null=True)
+    field_email = models.CharField(method_conf.vn_field_email, blank=True, help_text=method_conf.ht_field, max_length=254, null=True)
+
     if conf.ldap.activate:
         ldap_conf = conf.ldap
-        ldap_host = models.CharField(ldap_conf.vn_ldap_host, blank=True, default=ldap_conf.host, help_text=ldap_conf.ht_ldap_host, max_length=254, null=True)
-        ldap_define = models.CharField(ldap_conf.vn_ldap_define, blank=True, help_text=ldap_conf.ht_ldap_define, max_length=254, null=True)
-        ldap_scope = models.CharField(ldap_conf.vn_ldap_scope, choices=ldap_conf.choices_scope, default=ldap_conf.scope, help_text=ldap_conf.ht_ldap_scope, max_length=14)
-        ldap_version = models.CharField(ldap_conf.ht_ldap_version, choices=ldap_conf.choices_version, default=ldap_conf.version, help_text=ldap_conf.ht_ldap_version, max_length=8)
-        ldap_bind = models.CharField(ldap_conf.vn_ldap_bind, blank=True, help_text=ldap_conf.ht_ldap_bind, max_length=254, null=True)
-        ldap_password = models.CharField(ldap_conf.vn_ldap_password, blank=True, help_text=ldap_conf.ht_ldap_password, max_length=254, null=True)
-        ldap_user = models.TextField(ldap_conf.vn_ldap_user, blank=True, help_text=ldap_conf.ht_ldap_user, null=True)
-        ldap_search = models.TextField(ldap_conf.vn_ldap_search, help_text=ldap_conf.ht_ldap_search, blank=True, null=True)
+        ldap_host = models.CharField(ldap_conf.vn_host, blank=True, default=ldap_conf.host, help_text=ldap_conf.ht_host, max_length=254, null=True)
+        ldap_define = models.CharField(ldap_conf.vn_define, blank=True, help_text=ldap_conf.ht_define, max_length=254, null=True)
+        ldap_scope = models.CharField(ldap_conf.vn_scope, choices=ldap_conf.choices_scope, default=ldap_conf.scope, help_text=ldap_conf.ht_scope, max_length=14)
+        ldap_version = models.CharField(ldap_conf.ht_version, choices=ldap_conf.choices_version, default=ldap_conf.version, help_text=ldap_conf.ht_version, max_length=8)
+        ldap_bind = models.CharField(ldap_conf.vn_bind, blank=True, help_text=ldap_conf.ht_bind, max_length=254, null=True)
+        ldap_password = models.CharField(ldap_conf.vn_password, blank=True, help_text=ldap_conf.ht_password, max_length=254, null=True)
+        ldap_user = models.TextField(ldap_conf.vn_user, blank=True, help_text=ldap_conf.ht_user, null=True)
+        ldap_search = models.TextField(ldap_conf.vn_search, help_text=ldap_conf.ht_search, blank=True, null=True)
         ldap_tls_cacertfile = ldap_conf.tls_cacertfile
     
     def __str__(self):
@@ -125,8 +129,6 @@ class Method(Update):
 #██║   ██║╚════██║██╔══╝  ██╔══██╗
 #╚██████╔╝███████║███████╗██║  ██║
 # ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝
-
-
 class User(AbstractUser):
     conf_user = conf.User
     username = models.CharField(conf_user.vn_username, blank=conf_user.null_username, max_length=254, null=conf_user.null_username, unique=conf_user.unique_username, validators=[AbstractUser.username_validator],)
@@ -143,7 +145,7 @@ class User(AbstractUser):
     key = models.CharField(default=conf.api.key(conf_user.key_max_length), max_length=32, unique=True, validators=[MaxLengthValidator(conf_user.key_max_length), MinLengthValidator(conf_user.key_min_length),], verbose_name=_('Authentication key'),)
 
     objects = UserManager()
-    USERNAME_FIELD = conf_user.unique_identity
+    USERNAME_FIELD = conf_user.username_field
     REQUIRED_FIELDS = conf_user.required_fields
 
     class Meta:
@@ -233,7 +235,7 @@ class Task(Update):
         return False
         
 class Log(Update):
-    user = models.CharField(max_length=254, editable=False, verbose_name=getattr(conf.User, 'vn_{}'.format(conf.User.unique_identity)))
+    user = models.CharField(max_length=254, editable=False, verbose_name=getattr(conf.User, 'vn_{}'.format(conf.User.username_field)))
 
     class Meta:
         verbose_name        = conf.Log.verbose_name

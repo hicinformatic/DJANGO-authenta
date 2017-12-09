@@ -3,6 +3,7 @@ from django.http import (HttpResponse, JsonResponse)
 from django.middleware.csrf import get_token
 from django.contrib import admin
 from django.contrib.auth import get_permission_codename
+from django.core.exceptions import FieldDoesNotExist
 
 from django.views.generic import (DetailView, TemplateView)
 from django.views.generic.edit import (CreateView, UpdateView)
@@ -21,6 +22,8 @@ logger = conf.logger
 #██║     ██║  ██║██║  ██╗███████╗██║ ╚═╝ ██║╚██████╔╝██████╔╝███████╗███████╗
 #╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝╚══════╝
 class FakeModel(object):
+    def __init__(self, d={}):
+        self.__dict__ = d
     class _meta:
         def get_field(self):
             return FakeModel._meta()
@@ -63,6 +66,13 @@ class Hybrid(object):
                 response = getattr(self, self.response)(context)
         return response
 
+    def simple_data(self, obj, field):
+        try:
+            if obj._meta.get_field(field).get_internal_type() in self.meta_accepted: return getattr(self, 'related_{}'.format(self.extension))(obj, field)
+        except FieldDoesNotExist:
+            pass
+        return getattr(obj, field)() if callable(getattr(obj, field)) else getattr(obj, field)
+
 #██████╗ ███████╗████████╗ █████╗ ██╗██╗     
 #██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██║██║     
 #██║  ██║█████╗     ██║   ███████║██║██║     
@@ -70,20 +80,13 @@ class Hybrid(object):
 #██████╔╝███████╗   ██║   ██║  ██║██║███████╗
 #╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚══════╝
     def detail_json(self, obj):
-        return { field: self.related_json(obj, field)
-            if hasattr(obj, conf.App.meta) and obj._meta.get_field(field).get_internal_type() in self.meta_accepted else
-            getattr(obj, field) for field in self.fields_detail }
+        return { field: self.simple_data(obj, field) for field in self.fields_detail }
 
     def detail_txt(self, obj):
-        return conf.ContentType.txt_detail_separator.join([
-            self.contenttype.txt_related_template.format(field, self.related_txt(obj, field))
-            if obj._meta.get_field(field).get_internal_type() in self.meta_accepted else 
-            self.contenttype.txt_detail_template.format(field, getattr(obj, field)) for field in self.fields_detail ])
+        return conf.ContentType.txt_detail_separator.join([ self.contenttype.txt_detail_template.format(field, self.simple_data(obj, field)) for field in self.fields_detail ])
 
     def detail_csv(self, obj):
-        return [ self.related_csv(obj, field)
-            if hasattr(obj, conf.App.meta) and obj._meta.get_field(field).get_internal_type() in self.meta_accepted else
-            getattr(obj, field) for field in self.fields_detail ]
+        return [ self.simple_data(obj, field) for field in self.fields_detail ]
 
 #██████╗ ███████╗██╗      █████╗ ████████╗███████╗██████╗ 
 #██╔══██╗██╔════╝██║     ██╔══██╗╚══██╔══╝██╔════╝██╔══██╗
@@ -113,7 +116,7 @@ class Hybrid(object):
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
-        form.instance.update_by = getattr(self.request.user, conf.User.unique_identity)
+        form.instance.update_by = getattr(self.request.user, conf.User.username_field)
         return super(Hybrid, self).post(request)
 
 #██╗  ██╗██╗   ██╗██████╗ ██████╗ ██╗██████╗ ███████╗ ██████╗ ██████╗ ███╗   ███╗
@@ -197,7 +200,7 @@ class HybridListView(Hybrid, ListView):
         return JsonResponse([self.detail_json(obj) for obj in self.object_list], safe=False)
 
     def response_txt(self, context):
-        return HttpResponse([self.detail_txt(obj) for obj in self.object_list], content_type=self.contenttype.txt)
+        return HttpResponse(conf.ContentType.txt_object_separator.join([self.detail_txt(obj) for obj in self.object_list]), content_type=self.contenttype.txt)
 
     def response_csv(self, context):
         response = HttpResponse(content_type=self.contenttype.csv)

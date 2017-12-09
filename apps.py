@@ -136,7 +136,7 @@ class Config(OverConfig):
         csv_related_subtemplate = '{}={}'
         csv_related_subseparator = ';;'
 
-
+        txt_object_separator = '\n'
         txt_detail_template = '{}:{}'
         txt_detail_separator = ' // '
         txt_related_template = '{}:{}'
@@ -174,7 +174,7 @@ class Config(OverConfig):
 #╚██████╔╝███████║███████╗██║  ██║
 # ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝
     class User(OverConfig):
-        unique_identity = 'email'
+        username_field = 'email'
         unique_username = True
         unique_email = True
         null_username = False
@@ -258,6 +258,9 @@ class Config(OverConfig):
         vn_certificate = _('TLS Certificate')
         vn_check = _('Check')
         vn_self_signed = _('Self-signed')
+        vn_field_firstname = _('Firstname correspondence')
+        vn_field_lastname = _('Lastname correspondence')
+        vn_field_email = _('Email correspondence')
         ht_port = _('Change the port used by the method')
         ht_tls = _('Enable or disable TLS')
         ht_certificate = _('Uploaded here the certificate to check')
@@ -267,9 +270,11 @@ class Config(OverConfig):
         ht_certificate_content = _('Certificate content')
         ht_certificate_path = _('Certificate path')
         ht_self_signed = _('Is the certificate self-signed?')
+        ht_field = _('Automatically filled field with key map (Keep null if not used)')
         fieldsets = ((_('Globals'), { 'fields': ('method', 'name', 'port', 'enable',), }),)
-        fieldsets += ((_('TLS configuration'), { 'classes': ('wide',), 'fields': ('tls', 'certificate', 'self_signed', 'certificate_path', 'certificate_content', ),}),)
-        fieldsets += ((_('Groups and permissions'), { 'classes': ('wide',), 'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'permissions', ),}),)
+        fieldsets += ((_('TLS configuration'), { 'classes': ('collapse',), 'fields': ('tls', 'certificate', 'self_signed', 'certificate_path', 'certificate_content', ),}),)
+        fieldsets += ((_('Groups and permissions'), { 'classes': ('collapse',), 'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'permissions', ),}),)
+        fieldsets_correspondence = ((_('Correspondences'), { 'classes': ('collapse',), 'fields': ('field_firstname', 'field_lastname', 'field_email', ),}),)
         filter_horizontal = ('groups', 'permissions')
         list_display = ('name', 'method', 'enable', 'is_active', 'is_staff', 'is_superuser', 'status','admin_button_check')
         list_filter = ('method', 'enable',)
@@ -278,8 +283,9 @@ class Config(OverConfig):
         method_accepted = ['ldap',]
         fields_detail = [
             'id', 'method', 'name', 'port', 
-            'tls', 'self_signed',
+            'tls', 'self_signed', 'certificate', 'certificate_path',
             'is_active', 'is_staff', 'is_superuser', 'groups', 'permissions', 
+            'field_firstname', 'field_lastname', 'field_email',
             'error'
         ]
         fields_groups = ['id', 'name']
@@ -298,6 +304,7 @@ class Config(OverConfig):
 #╚══════╝╚═════╝ ╚═╝  ╚═╝╚═╝
     class ldap(OverConfig):
         activate = True
+        username_field = 'username'
         name = 'LDAP'
         option = _('LDAP')
         host = 'localhost'
@@ -311,26 +318,28 @@ class Config(OverConfig):
             'classes': ('collapse',),
             'fields': ('ldap_host', 'ldap_define', 'ldap_scope', 'ldap_version', 'ldap_bind', 'ldap_password', 'ldap_user', 'ldap_search',),}),)
         readonly_fields = ('certificate_content', 'certificate_path', )
-        vn_ldap_host = _('Use hostname or IP address')
-        vn_ldap_define = _('Base DN ex: dc=domain,dc=com')
-        vn_ldap_version = _('Version')
-        vn_ldap_scope = _('Scope')
-        vn_ldap_bind = _('Root DN')
-        vn_ldap_password = _('Root password')
-        vn_ldap_user = _('User DN')
-        vn_ldap_search = _('Search DN')
-        ht_ldap_host = _('Hostname/IP')
-        ht_ldap_port = _('Keep 389 to use default port')
-        ht_ldap_tls = _('Use option TLS')
-        ht_ldap_define = _('Base DN')
-        ht_ldap_scope = _('Choice a scope. The command will be like "scope=***"')
-        ht_ldap_version = _('Choice a version')
-        ht_ldap_bind = _('Bind for override user permission, ex: cn=manager,dc=domain,dc=com (Keep null if not used)')
-        ht_ldap_password = _('Password used by the bind')
-        ht_ldap_user = _('Replace root DN by a User DN. <strong>Do not use with root DN</strong> | user DN ex : uid={{tag}},ou=my-ou,dc=domain,dc=com | Available tags: username,email')
-        ht_ldap_search = _('search DN (LDAP filter) ex : (&(uid={{tag}})(memberof=cn=my-cn,ou=groups,dc=hub-t,dc=net)) | Available tags: username,email')
+        #vn_username_field = _('Username field')
+        #ht_username_field = _('Identification fields ')
+        vn_host = _('Use hostname or IP address')
+        vn_define = _('Base DN ex: dc=domain,dc=com')
+        vn_version = _('Version')
+        vn_scope = _('Scope')
+        vn_bind = _('Root DN')
+        vn_password = _('Root password')
+        vn_user = _('User DN')
+        vn_search = _('Search DN')
+        ht_host = _('Hostname/IP')
+        ht_port = _('Keep 389 to use default port')
+        ht_tls = _('Use option TLS')
+        ht_define = _('Base DN')
+        ht_scope = _('Choice a scope. The command will be like "scope=***"')
+        ht_version = _('Choice a version')
+        ht_bind = _('Bind for override user permission, ex: cn=manager,dc=domain,dc=com (Keep null if not used)')
+        ht_password = _('Password used by the bind')
+        ht_user = _('Replace root DN by a User DN. <strong>Do not use with root DN</strong> | user DN ex : uid={{tag}},ou=my-ou,dc=domain,dc=com | Available tags: username')
+        ht_search = _('search DN (LDAP filter) ex : (&(uid={{tag}})(memberof=cn=my-cn,ou=groups,dc=hub-t,dc=net)) | Available tags: username')
         err_not_exist = 'UserDoesNotExist'
-        fields = ['ldap_host', 'ldap_define', 'ldap_scope', 'ldap_version', 'ldap_bind', 'ldap_password', 'ldap_user', 'ldap_search',]
+        fields = ['ldap_host', 'ldap_define', 'ldap_scope', 'ldap_version', 'ldap_bind', 'ldap_password', 'ldap_user', 'ldap_search', 'ldap_tls_cacertfile']
 
         def dir_cert(instance, filename):
             return self.certificates.format(conf.dir_cert, instance.name)
@@ -431,10 +440,10 @@ class AuthentaConfig(AppConfig, Config):
             self.logger('info', 'Create directory: {}'.format(self.App.dir_cert))
         self.logger('info', 'log level: {}'.format(self.Log.log_level))
         if self.User.add_fieldsets is None:
-            self.User.list_display = (self.User.unique_identity, 'is_active', 'is_staff', 'date_joined')
+            self.User.list_display = (self.User.username_field, 'is_active', 'is_staff', 'date_joined')
         self.logger('debug', 'User list display: {}'.format(self.User.list_display))
         if self.User.add_fieldsets is None:
-            self.User.add_fieldsets = (( None, { 'fields': (self.User.unique_identity, self.User.required_fields, 'password1', 'password2') }),)
+            self.User.add_fieldsets = (( None, { 'fields': (self.User.username_field, self.User.required_fields, 'password1', 'password2') }),)
         self.logger('debug', 'User add field: {}'.format(self.User.add_fieldsets))
         if self.Extension.regex is None:
             self.Extension.regex = '|'.join([ext for ext in self.Extension.authorized])

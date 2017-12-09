@@ -29,11 +29,11 @@ p.authenta { font-size: 8px; text-align: right; }
 {% endif %}
 
 {% if form.non_field_errors %}
-{% for error in form.non_field_errors %}
 <p class="errornote">
-    {{ error }}
-</p>
+{% for error in form.non_field_errors %}
+    {{ error }}<br/>
 {% endfor %}
+</p>
 {% endif %}
 
 <div id="content-main">

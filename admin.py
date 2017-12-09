@@ -63,7 +63,7 @@ class OverAdmin(object):
     def save_model(self, request, obj, form, change):
         if hasattr(obj, conf.User.field_method) and obj.method is None:
             obj.authentication_method = conf.User.method_backend
-        obj.update_by = getattr(request.user, conf.User.unique_identity)
+        obj.update_by = getattr(request.user, conf.User.username_field)
         super(OverAdmin, self).save_model(request, obj, form, change)
 
 @admin.register(CustomUser)
@@ -94,6 +94,7 @@ class MethodAdmin(OverAdmin, admin.ModelAdmin):
     search_fields = conf.Method.search_fields
     readonly_fields = conf.Method.readonly_fields
     if conf.ldap.activate: readonly_fields += conf.ldap.readonly_fields
+    fieldsets+=conf.Method.fieldsets_correspondence
     fieldsets+=conf.fieldsets
 
     def get_urls(self):

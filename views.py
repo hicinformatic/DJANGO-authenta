@@ -28,12 +28,18 @@ class MethodAdminCheck(HybridAdminView, HybridDetailView):
     def get_context_data(self, **kwargs):
         context = super(MethodAdminCheck, self).get_context_data(**kwargs)
         method = self.object.method_get()
+        try:
+            method.check()
+            if self.object.error is not None:
+                self.object.error = None
+                self.object.save()
+        except Exception as error:
+            self.object.error = error
+            self.object.save()
         if self.extension == conf.Extension.default_extension:
-            messages.info(self.request, self.object.method_conf.info_method_check) if method.check() else messages.error(self.request, self.object.method_conf.error_method_check)
-        context.update({
-            'title': '{}: {}'.format(conf.Method.vn_check, self.get_object()),
-            'method_fields': getattr(conf, self.object.method.lower()).fields ,
-        })
+            if self.object.error is None: messages.info(self.request, self.object.method_conf.info_method_check) 
+            else: messages.error(self.request, self.object.method_conf.error_method_check)
+        context.update({ 'title': '{}: {}'.format(conf.Method.vn_check, self.get_object()), 'method_fields': getattr(conf, self.object.method.lower()).fields ,})
         return context
 
 @method_decorator(howtoaccess(conf.Task.host_authorized+['is_superuser',]), name='dispatch')
@@ -106,3 +112,12 @@ class TaskPurge(HybridTemplateView):
             self.object.number = self.object.number-1
             Task.objects.filter(pk__in=tasks, date_update__gte=delta).exclude(pk=list(tasks)[0]).delete()
         return context
+
+from django.http import HttpResponse
+def test(request):
+    method = Method.objects.get(id=1)
+    test = 'ko'
+    if callable(getattr(method, 'groups')) and method._meta.get_field('groups').get_internal_type() in ['ManyToManyField']:
+        test = 'ok'
+    html = "<html><body>%s</body></html>" % test
+    return HttpResponse(html)
