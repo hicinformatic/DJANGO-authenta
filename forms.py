@@ -33,12 +33,14 @@ class AuthenticationLDAPForm(AuthenticationForm):
         username = self.cleaned_data.get('username')
         password = self.cleaned_data.get('password')
         if username is not None and password:
+            self.request.login_method = 'additional'
             self.user = User()
             if self.cycle(username, password):
                 user = self.user.manage_additional(self.request, conf.ldap.username_field, username, password)
                 if user is not None:
-                    self.cleaned_data['username'] = user.email
+                    self.cleaned_data['username'] = getattr(user, user.USERNAME_FIELD)
                     self._errors = None
+                    print('okkkkkk')
                     return super(AuthenticationLDAPForm, self).clean()
         return self.cleaned_data
 

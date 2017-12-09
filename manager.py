@@ -43,8 +43,11 @@ class UserManager(BaseUserManager):
             raise ValueError(conf.User.error_is_superuser)
         return self._create_user(password, **extra_fields)
 
+    def get_by_natural_key(self, username):
+        return self.get(**{self.model.USERNAME_FIELD: username}, method__in=[conf.User.method_createsuperuser, conf.User.method_backend, conf.User.method_frontend])
+
     def get_by_method_additional(self, username):
-        return self.get(**{self.model.username_field: username}, method=conf.User.method_additional)
+        return self.get(**{self.model.USERNAME_FIELD: username}, method=conf.User.method_additional)
 
     def add_method(self, method):
         self.one_is_true = True

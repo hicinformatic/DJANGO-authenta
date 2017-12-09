@@ -174,7 +174,8 @@ class Config(OverConfig):
 #╚██████╔╝███████║███████╗██║  ██║
 # ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝
     class User(OverConfig):
-        username_field = 'email'
+        username_field = 'username'
+        required_fields = []
         unique_username = True
         unique_email = True
         null_username = False
@@ -195,7 +196,6 @@ class Config(OverConfig):
         )
         default_method = method_frontend
         manager_update_by = 'manager.py'
-        required_fields = ['username']
         field_username = 'username'
         field_email = 'email'
         field_is_superuser = 'is_superuser'
