@@ -112,12 +112,3 @@ class TaskPurge(HybridTemplateView):
             self.object.number = self.object.number-1
             Task.objects.filter(pk__in=tasks, date_update__gte=delta).exclude(pk=list(tasks)[0]).delete()
         return context
-
-from django.http import HttpResponse
-def test(request):
-    method = Method.objects.get(id=1)
-    test = 'ko'
-    if callable(getattr(method, 'groups')) and method._meta.get_field('groups').get_internal_type() in ['ManyToManyField']:
-        test = 'ok'
-    html = "<html><body>%s</body></html>" % test
-    return HttpResponse(html)

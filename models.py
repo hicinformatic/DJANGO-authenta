@@ -233,10 +233,3 @@ class Task(Update):
             self.error = error
             logger('debug', 'start_task failed: {}'.format(error))
         return False
-        
-class Log(Update):
-    user = models.CharField(max_length=254, editable=False, verbose_name=getattr(conf.User, 'vn_{}'.format(conf.User.username_field)))
-
-    class Meta:
-        verbose_name        = conf.Log.verbose_name
-        verbose_name_plural = conf.Log.verbose_name_plural

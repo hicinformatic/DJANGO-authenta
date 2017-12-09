@@ -61,12 +61,6 @@ class Config(OverConfig):
 #███████╗╚██████╔╝╚██████╔╝
 #╚══════╝ ╚═════╝  ╚═════╝   
     class Log(OverConfig):
-        verbose_name = _('# Log')
-        verbose_name_plural = _('# Logs')
-        list_display = ('user', 'date_create')
-        fieldsets = ((_('Globals'), { 'fields': ('user', ), }),)
-        fieldsets += OverConfig.fieldsets
-        readonly_fields = OverConfig.readonly_fields
         log_type = 'console'
         log_level = 7
         format_syslog = '[{}] {}'
@@ -155,6 +149,7 @@ class Config(OverConfig):
         site_header = _('Django administration')
         index_title = _('Site administration (assisted by Authenta)')
         verbose_name = _('Authentication and Authorization')
+        login = _('Log in')
 
     class Group(OverConfig):
         list_display = ['name', 'date_create', 'date_update']
@@ -239,6 +234,7 @@ class Config(OverConfig):
 #██║ ╚═╝ ██║███████╗   ██║   ██║  ██║╚██████╔╝██████╔╝
 #╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝  
     class Method(OverConfig):
+        login_method = 'login_method'
         verbose_name = _('Method')
         verbose_name_plural = _('Methods')
         choices = ()

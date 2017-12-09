@@ -33,7 +33,7 @@ class AuthenticationLDAPForm(AuthenticationForm):
         username = self.cleaned_data.get('username')
         password = self.cleaned_data.get('password')
         if username is not None and password:
-            self.request.login_method = 'additional'
+            setattr(self.request, conf.Method.login_method, conf.User.method_additional)
             self.user = User()
             if self.cycle(username, password):
                 user = self.user.manage_additional(self.request, conf.ldap.username_field, username, password)

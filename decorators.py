@@ -30,6 +30,6 @@ def howtoaccess(authorized=None):
                 setattr(request.user, conf.User.username_field, conf.Task.update_by_local)
                 logger('debug', 'how to access: HTTP_X_FORWARDED_FOR, id: {}'.format(conf.Task.update_by_local))
                 return view_func(request, *args, **kwargs)
-            return view_func(request, *args, **kwargs)
+            return HttpResponseForbidden()
         return _wrapped_view
     return _howtoaccess

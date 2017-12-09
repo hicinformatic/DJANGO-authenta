@@ -1,6 +1,8 @@
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth import get_user_model
 
+from .apps import AuthentaConfig as conf
+
 UserModel = get_user_model()
 
 class ModelBackend(ModelBackend):
@@ -8,7 +10,7 @@ class ModelBackend(ModelBackend):
         if username is None:
             username = kwargs.get(UserModel.USERNAME_FIELD)
         try:
-            if hasattr(request, 'login_method') and request.login_method == 'additional':
+            if hasattr(request, conf.Method.login_method) and request.login_method == conf.User.method_additional:
                 user = UserModel._default_manager.get_by_method_additional(username)
             else:
                 user = UserModel._default_manager.get_by_natural_key(username)
