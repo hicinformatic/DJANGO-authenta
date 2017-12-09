@@ -9,6 +9,8 @@ from .models import Method, User
 from .manager import UserManager as User
 import os, json
 
+logger = conf.logger
+
 
 class AuthenticationLDAPForm(AuthenticationForm):
     user = None
@@ -40,7 +42,6 @@ class AuthenticationLDAPForm(AuthenticationForm):
                 if user is not None:
                     self.cleaned_data['username'] = getattr(user, user.USERNAME_FIELD)
                     self._errors = None
-                    print('okkkkkk')
                     return super(AuthenticationLDAPForm, self).clean()
         return self.cleaned_data
 
@@ -58,11 +59,16 @@ class AuthenticationLDAPForm(AuthenticationForm):
                 try:
                     data = ldap.get(username, password)
                 except method_ldap.UserNotFound:
-                    self.add_error(None, '{} - {}'.format(method['name'], _('User Not Found')))
+                    error = '{} - {}'.format(method['name'], _('User Not Found'))
+                    self.add_error(None, error)
+                    logger('notice', error)
                 except ldap_orig.INVALID_CREDENTIALS:
-                    self.add_error(None, '{} - {}'.format(method['name'], _('Invalid credentials')))
+                    error = '{} - {}'.format(method['name'], _('Invalid credentials'))
+                    self.add_error(None, error)
+                    logger('notice', error)
                 except Exception as error:
-                    self.add_error(None, '{} - {}'.format(method['name'], error))
+                    self.add_error(None, error)
+                    logger('notice', error)
                 else:
                     self.user.add_method(method['id'])
                     self.user.is_active(method['is_active'])

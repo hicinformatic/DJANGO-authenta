@@ -427,24 +427,22 @@ class AuthentaConfig(AppConfig, Config):
         from . import signals
         if not os.path.exists(self.App.dir_logs): 
             os.makedirs(self.App.dir_logs)
-            self.logger('info', 'Create directory: {}'.format(self.App.dir_logs))
+            self.logger('info', 'Create directory: %s' % self.App.dir_logs)
         if not os.path.exists(self.App.dir_cache): 
             os.makedirs(self.App.dir_cache)
-            self.logger('info', 'Create directory: {}'.format(self.App.dir_cache))
+            self.logger('info', 'Create directory: %s' % self.App.dir_cache)
         if not os.path.exists(self.App.dir_cert): 
             os.makedirs(self.App.dir_cert)
-            self.logger('info', 'Create directory: {}'.format(self.App.dir_cert))
-        self.logger('info', 'log level: {}'.format(self.Log.log_level))
+            self.logger('info', 'Create directory: %s' % self.App.dir_cert)
+        self.logger('info', 'log level: %s' % self.Log.log_level)
         if self.User.add_fieldsets is None:
             self.User.list_display = (self.User.username_field, 'is_active', 'is_staff', 'date_joined')
-        self.logger('debug', 'User list display: {}'.format(self.User.list_display))
         if self.User.add_fieldsets is None:
             self.User.add_fieldsets = (( None, { 'fields': (self.User.username_field, self.User.required_fields, 'password1', 'password2') }),)
-        self.logger('debug', 'User add field: {}'.format(self.User.add_fieldsets))
         if self.Extension.regex is None:
             self.Extension.regex = '|'.join([ext for ext in self.Extension.authorized])
-        self.logger('debug', 'Regex extensions: {}'.format(self.Extension.regex))
-        self.logger('debug', 'Choices method: {}'.format(self.Method.choices))
+        self.logger('debug', 'Extensions: %s' % self.Extension.regex)
+        self.logger('debug', 'Methodsl: %s' % self.Method.choices)
         self.Task.view_absolute = self.Task.view_absolute.format(self.App.namespace)
         self.Task.purge_number+=1
         self.Method.view_absolute = self.Method.view_absolute.format(self.App.namespace)

@@ -113,12 +113,12 @@ class Method(Update):
         verbose_name_plural = conf.Method.verbose_name_plural
 
     def method_get(self):
-        logger('debug', 'method getting: {}'.format(self.method))
-        return getattr(getattr(methods, '{}'.format(self.method.lower())), 'method_{}'.format(self.method.lower()))(self)
+        logger('debug', 'method getting: %s' % self.method)
+        return getattr(getattr(methods, self.method.lower()), 'method_%s' % self.method.lower())(self)
 
     def admin_button_check(self):
         from django.urls import reverse
-        url = reverse('admin:{}_method_check'.format(conf.App.namespace, self._meta.model_name),  args=[self.id])
+        url = reverse('admin:{}_{}_check'.format(conf.App.namespace, self._meta.model_name),  args=[self.id])
         return '<a class="button" href="{}">{}</a>'.format(url, self.method_conf.vn_check)
     admin_button_check.allow_tags = True
     admin_button_check.short_description = method_conf.vn_check
@@ -206,30 +206,30 @@ class Task(Update):
         if self.status != self.conf_task.status_order:
             self.error = self.conf_task.error_not_order
             self.save()
-            logger('debug', 'can_run failed: {}'.format(self.error))
+            logger('debug', 'can_run failed: %s' % self.error)
             return False
         try: 
-            logger('notice', 'local_check: {}'.format(self.local_check))
+            logger('notice', 'local_check: %s' % self.local_check)
             subprocess.check_call(self.local_check, shell=True)
             logger('debug', 'can_run success')
             return True
         except subprocess.CalledProcessError as error:
             self.error = error
-            logger('debug', 'can_run failed: {}'.format(error))
+            logger('debug', 'can_run failed: %s' % error)
         return False
 
     def start_task(self):
         if self.status != self.conf_task.status_ready:
             self.error = self.conf_task.error_not_ready
             self.save()
-            logger('debug', 'start_task failed: {}'.format(self.error))
+            logger('debug', 'start_task failed: %s' % self.error)
             return False
         try: 
-            logger('notice', 'command: {}'.format(self.command))
+            logger('notice', 'command: %s' % self.command)
             subprocess.check_call(self.command, shell=True)
             logger('debug', 'start_task success')
             return True
         except subprocess.CalledProcessError as error:
             self.error = error
-            logger('debug', 'start_task failed: {}'.format(error))
+            logger('debug', 'start_task failed: %s' % error)
         return False

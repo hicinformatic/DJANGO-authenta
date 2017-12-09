@@ -77,7 +77,7 @@ class CustomUserAdmin(OverAdmin, UserAdmin):
 #admin.site.unregister(Group)
 @admin.register(CustomGroup)
 class CustomGroup(GroupAdmin):
-    filter_horizontal = ('permissions',)
+    pass
 
 
 from django.http import (HttpResponse, JsonResponse)

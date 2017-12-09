@@ -10,6 +10,8 @@ import urllib.request, urllib.parse, json
 url = 'methods.json'
 url = task.getUrl(url)
 task.update('running', 'Get methods')
+import time
+time.sleep(150)
 
 with urllib.request.urlopen(url) as url:
     methods = json.loads(url.read().decode())

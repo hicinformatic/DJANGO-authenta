@@ -22,7 +22,7 @@ TASK=$(echo $DETAIL | awk -F "\"* // \"*" '{print $1}' | cut -d ':' -f 2)
 UPDATE=$(curl -sc $FILE_JAR $URL_READY)
 TOKEN=$(echo $UPDATE | awk -F "\"* // \"*" '{print $4}' | cut -d ':' -f 2)
 
-TASK='runserver'
+echo $TASK
 
 if [ -f $FILE_PID ]; then
     CONTENT_FILE_PID=$(cat $FILE_PID)
@@ -32,6 +32,7 @@ if [ -f $FILE_PID ]; then
         if [ $UP_TIME -gt $TIMEOUT ]; then
             $(kill -9 $CONTENT_FILE_PID > /dev/null)
             $(rm $FILE_PID)
+            echo "test"
             INFO="A task was killed"
         else
             CAN_RUN=0
@@ -60,9 +61,9 @@ if [ $CAN_RUN -eq 1 ] ; then
     fi
 fi
 
-if [ $CAN_RUN -eq 1 ] ; then
-    $(curl -sb $FILE_JAR $URL_READY -d "status=ready&info=${INFO}&error=&csrfmiddlewaretoken=${TOKEN}")
-else
-    $(curl -sb $FILE_JAR $URL_READY -d "status=error&info=&error=${ERROR}&csrfmiddlewaretoken=${TOKEN}")
-fi
+#if [ $CAN_RUN -eq 1 ] ; then
+#    $(curl -sb $FILE_JAR $URL_READY -d "status=ready&info=${INFO}&error=&csrfmiddlewaretoken=${TOKEN}")
+#else
+#    $(curl -sb $FILE_JAR $URL_READY -d "status=error&info=&error=${ERROR}&csrfmiddlewaretoken=${TOKEN}")
+#fi
 $(rm $FILE_JAR)

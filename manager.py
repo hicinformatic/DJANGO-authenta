@@ -2,6 +2,7 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth import get_user_model
 
 from .apps import AuthentaConfig as conf
+logger = conf.logger
 
 class UserManager(BaseUserManager):
     use_in_migrations = True
@@ -87,6 +88,7 @@ class UserManager(BaseUserManager):
         return self.create_user_by_method_additional(username, password) if user is None else self.update_user_by_method_additional(user)
 
     def create_user_by_method_additional(self, username, password):
+        logger('notice', 'create_user: %s' % username)
         return get_user_model().objects.create_user(username=username, password=password, **self.extra_fields)
 
     def update_user_by_method_additional(self, user):
