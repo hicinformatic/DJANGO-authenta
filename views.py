@@ -105,7 +105,7 @@ class TaskPurge(HybridTemplateView):
     def get_context_data(self, **kwargs):
         context = super(TaskPurge, self).get_context_data(**kwargs)
         delta = timezone.now()-timedelta(days=5)
-        tasks = Task.objects.filter(date_update__gte=delta)
+        tasks = Task.objects.filter(date_update__gte=delta).order_by('-id')
         self.object.number = tasks.count()
         tasks = tasks.values_list('pk', flat=True)
         if self.object.number > 0:

@@ -133,7 +133,7 @@ class HybridForm(Hybrid):
     def get_context_data(self, **kwargs):
         context = super(HybridForm, self).get_context_data(**kwargs)
         self.token = get_token(self.request)
-        logger('debug', 'token: {}'.format(self.token))
+        logger('debug', 'token: %s' % self.token)
         return context
   
     def get_success_url(self):
