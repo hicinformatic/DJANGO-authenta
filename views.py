@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 
 from .apps import AuthentaConfig as  conf
 from .decorators import howtoaccess
@@ -17,7 +18,7 @@ from datetime import timedelta
 #██║╚██╔╝██║██╔══╝     ██║   ██╔══██║██║   ██║██║  ██║
 #██║ ╚═╝ ██║███████╗   ██║   ██║  ██║╚██████╔╝██████╔╝
 #╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝
-@method_decorator(howtoaccess(['is_local_robot',]), name='dispatch')
+@method_decorator(permission_required('authenta.is_local_robot'), name='dispatch')
 class MethodCheck(HybridDetailView):
     model = Method
     fields_detail = conf.Method.fields_detail
@@ -37,7 +38,8 @@ class MethodCheck(HybridDetailView):
             self.object.save()
         return context
 
-@method_decorator(howtoaccess(['is_superuser',]), name='dispatch')
+
+@method_decorator(user_passes_test(lambda u: u.is_superuser), name='dispatch')
 class MethodAdminCheck(HybridAdminView, MethodCheck):
     template_name = conf.Method.template_name_admin_check
 
@@ -49,13 +51,13 @@ class MethodAdminCheck(HybridAdminView, MethodCheck):
         context.update({ 'title': '{}: {}'.format(conf.Method.vn_check, self.get_object()), 'method_fields': getattr(conf, self.object.method.lower()).fields ,})
         return context
 
-@method_decorator(howtoaccess(['is_local_robot',]), name='dispatch')
+@method_decorator(permission_required('authenta.is_local_robot'), name='dispatch')
 class MethodFunction(HybridUpdateView):
     model = Method
     form_class = MethodFormFunction
     view_absolute = conf.Method.view_absolute
 
-@method_decorator(howtoaccess(['is_local_robot',]), name='dispatch')
+@method_decorator(permission_required('authenta.is_local_robot'), name='dispatch')
 class MethodDetail(HybridDetailView):
     model = Method
     fields_detail = conf.Method.fields_detail
@@ -67,7 +69,7 @@ class MethodDetail(HybridDetailView):
             self.fields_detail = self.fields_detail + conf.ldap.fields
         return super(MethodDetail, self).get_context_data(**kwargs)
 
-@method_decorator(howtoaccess(['is_local_robot',]), name='dispatch')
+@method_decorator(permission_required('authenta.is_local_robot'), name='dispatch')
 class MethodList(HybridListView):
     model = Method
     template_name = conf.App.template_list
@@ -86,24 +88,24 @@ class MethodList(HybridListView):
 #   ██║   ██╔══██║╚════██║██╔═██╗ 
 #   ██║   ██║  ██║███████║██║  ██╗
 #   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
-@method_decorator(howtoaccess(['is_local_robot',]), name='dispatch')
+@method_decorator(permission_required('authenta.is_local_robot'), name='dispatch')
 class TaskCreate(HybridCreateView):
     model = Task
     view_absolute = conf.Task.view_absolute
     fields = conf.Task.fields_create
 
-@method_decorator(howtoaccess(['is_local_robot',]), name='dispatch')
+@method_decorator(permission_required('authenta.is_local_robot'), name='dispatch')
 class TaskUpdate(HybridUpdateView):
     model = Task
     view_absolute = conf.Task.view_absolute
     fields = conf.Task.fields_update
 
-@method_decorator(howtoaccess(['is_local_robot',]), name='dispatch')
+@method_decorator(permission_required('authenta.is_local_robot'), name='dispatch')
 class TaskDetail(HybridDetailView):
     model = Task
     fields_detail = conf.Task.fields_detail
 
-@method_decorator(howtoaccess(['is_local_robot',]), name='dispatch')
+@method_decorator(permission_required('authenta.is_local_robot'), name='dispatch')
 class TaskPurge(HybridTemplateView):
     template_name = conf.App.template_detail
     fields_detail = conf.Task.fields_purge
