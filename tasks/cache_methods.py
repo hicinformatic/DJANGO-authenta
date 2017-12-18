@@ -1,5 +1,6 @@
 from library import Task
-import os, sys
+import os, sys, base64
+
 
 scriptname = os.path.basename(__file__)[:-3]
 taskid = sys.argv[1]
@@ -10,10 +11,13 @@ import urllib.request, urllib.parse, json
 url = 'methods.json'
 url = task.getUrl(url)
 task.update('running', 'Get methods')
-import time
-time.sleep(150)
 
-with urllib.request.urlopen(url) as url:
+
+curl = urllib.request.Request(url)
+credentials = ('%s:%s' % (task.username, task.password))
+encoded_credentials = base64.b64encode(credentials.encode('ascii'))
+curl.add_header('Authorization', 'Basic %s' % encoded_credentials.decode("ascii"))
+with urllib.request.urlopen(curl)  as url:
     methods = json.loads(url.read().decode())
     cache = {}
     for method in methods:

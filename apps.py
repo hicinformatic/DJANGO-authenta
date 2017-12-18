@@ -348,6 +348,12 @@ class Config(OverConfig):
         def key(key_max_length):
             return ''.join(random.choice('-._~+/'+string.hexdigits) for x in range(key_max_length))
 
+    class robot(OverConfig):
+        username = 'robot'
+        password = 'de76FBE368fAc.9--bfaAaA.af-a7_E5'
+        field_is_local_robot = 'is_local_robot'
+        ht_is_local_robot = _('can access Robot mode')
+
 #████████╗ █████╗ ███████╗██╗  ██╗
 #╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
 #   ██║   ███████║███████╗█████╔╝ 
@@ -401,12 +407,10 @@ class Config(OverConfig):
         python = '/bin/python3.6'
         python_extension = '.py'
         kill_timeout = 3600
-        host_authorized = ['localhost', 'localhost:8000']
-        ip_authorized = ['127.0.0.1',]
         django_port = 8000
         update_by_local = 'local_robot'
         template_command = '{background} {python} {directory}/{task}{extension} {id} {background_end}'
-        template_local_check = '{background} {binary} {directory}/{script}{script_extension} {port} {namespace} {timeout} {id} {background_end}'
+        template_local_check = '{background} {binary} {directory}/{script}{script_extension} {port} {namespace} {timeout} {id} {robot} {password} {background_end}'
         fields_detail = ['task', 'info', 'status', 'error']
         fields_create = ['task', 'info']
         fields_update = ['status', 'info', 'error']
@@ -436,7 +440,7 @@ class AuthentaConfig(AppConfig, Config):
             self.logger('info', 'Create directory: %s' % self.App.dir_cert)
         self.logger('info', 'log level: %s' % self.Log.log_level)
         if self.User.add_fieldsets is None:
-            self.User.list_display = (self.User.username_field, 'is_active', 'is_staff', 'date_joined')
+            self.User.list_display = (self.User.username_field, 'is_active', 'is_staff', 'method', 'date_joined')
         if self.User.add_fieldsets is None:
             self.User.add_fieldsets = (( None, { 'fields': (self.User.username_field, self.User.required_fields, 'password1', 'password2') }),)
         if self.Extension.regex is None:

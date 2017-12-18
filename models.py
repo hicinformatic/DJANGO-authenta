@@ -154,6 +154,7 @@ class User(AbstractUser):
 
         permissions = (
             (conf.api.field_is_api, conf.api.ht_is_api),
+            (conf.robot.field_is_local_robot, conf.robot.ht_is_local_robot),
         )
 
     def clean(self):
@@ -199,6 +200,8 @@ class Task(Update):
         prepare['script'] = self.conf_task.script_can_run
         prepare['script_extension'] = self.conf_task.script_can_run_extension
         prepare['timeout'] = self.conf_task.kill_timeout
+        prepare['robot'] = conf.robot.username
+        prepare['password'] = conf.robot.password
         self.local_check = self.conf_task.template_local_check.format(**prepare)
         self.save()
 

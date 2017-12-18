@@ -8,10 +8,12 @@ PORT=$1
 NAMESPACE=$2
 TIMEOUT=$3
 ID=$4
+ROBOT=$5
+PASSWORD=$6
 FILE_PID="${DIRECTORY}/${ID}.pid"
 FILE_JAR="${DIRECTORY}/${ID}.jar"
-URL_TASK="http://localhost:${PORT}/${NAMESPACE}/task/detail/${ID}.txt"
-URL_READY="http://localhost:${PORT}/${NAMESPACE}/task/update/${ID}.txt"
+URL_TASK="http://${ROBOT}:${PASSWORD}@localhost:${PORT}/${NAMESPACE}/task/detail/${ID}.txt"
+URL_READY="http:/${ROBOT}:${PASSWORD}@localhost:${PORT}/${NAMESPACE}/task/update/${ID}.txt"
 CAN_RUN=1
 INFO="Nothing abnormal"
 

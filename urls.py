@@ -13,6 +13,7 @@ urlpatterns = []
 #██║ ╚═╝ ██║███████╗   ██║   ██║  ██║╚██████╔╝██████╔╝
 #╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝
 urlpatterns.append(url(r'^{name}/method/function/(?P<pk>\d+)(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.MethodFunction.as_view(), name='MethodFunction'))
+urlpatterns.append(url(r'^{name}/method/check/(?P<pk>\d+)(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.MethodCheck.as_view(), name='MethodCheck'))
 urlpatterns.append(url(r'^{name}/method/detail/(?P<pk>\d+)(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.MethodDetail.as_view(), name='MethodDetail'))
 urlpatterns.append(url(r'^{name}/methods(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.MethodList.as_view(), name='MethodList'))
 
