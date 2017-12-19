@@ -24,6 +24,17 @@ urlpatterns.append(url(r'^{name}/methods(\.|/)?(?P<extension>({regex_extension})
 #   ██║   ██║  ██║███████║██║  ██╗
 #   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
 urlpatterns.append(url(r'^{name}/task/create(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.TaskCreate.as_view(), name='TaskCreate'))
-urlpatterns.append(url(r'^{name}/task/update/(?P<pk>\d+)(\.|/)?(?P<extension>({regex_extension}))/?$'.format(**formatter), views.TaskUpdate.as_view(), name='TaskUpdate'))
-urlpatterns.append(url(r'^{name}/task/detail/(?P<pk>\d+)(\.|/)?(?P<extension>({regex_extension}))/?$'.format(**formatter), views.TaskDetail.as_view(), name='TaskDetail'))
-urlpatterns.append(url(r'^{name}/task/purge(\.|/)?(?P<extension>({regex_extension}))/?$'.format(**formatter), views.TaskPurge.as_view(), name='TaskPurge'))
+urlpatterns.append(url(r'^{name}/task/update/(?P<pk>\d+)(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.TaskUpdate.as_view(), name='TaskUpdate'))
+urlpatterns.append(url(r'^{name}/task/detail/(?P<pk>\d+)(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.TaskDetail.as_view(), name='TaskDetail'))
+urlpatterns.append(url(r'^{name}/task/purge(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.TaskPurge.as_view(), name='TaskPurge'))
+
+#██╗   ██╗███████╗███████╗██████╗ 
+#██║   ██║██╔════╝██╔════╝██╔══██╗
+#██║   ██║███████╗█████╗  ██████╔╝
+#██║   ██║╚════██║██╔══╝  ██╔══██╗
+#╚██████╔╝███████║███████╗██║  ██║
+# ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝
+urlpatterns.append(url(r'^accounts/login(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.SignIn.as_view(), name='SignIn'))
+urlpatterns.append(url(r'^accounts/login/ldap(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.SignInLDAP.as_view(), name='SignInLDAP'))
+urlpatterns.append(url(r'^accounts(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.Accounts.as_view(), name='Accounts'))
+urlpatterns.append(url(r'^accounts/profile(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.Profile.as_view(), name='Profile'))

@@ -5,16 +5,9 @@ from django.conf import settings
 import datetime, syslog, os, hashlib, sys, random, string
 
 class OverConfig(object):
+    allconf = ['Task', 'robot', 'api', 'ldap', 'Method', 'User', 'Group', 'Admin', 'ContentType', 'Extension', 'Log', 'App']
     fieldsets = ((_('Logs'), { 'classes': ('wide',), 'fields': ('update_by', 'date_create', 'date_update', 'error', ),}),)
     readonly_fields = ('update_by', 'date_create', 'date_update', 'error')
-
-    #def __init__(self):
-    #    if hasattr(settings, self.settings_override):
-    #        settings_class = getattr(settings, self.settings_override)
-    #        if hasattr(settings_class, self.__class__.__name__):
-    #            settings_class = getattr(settings_class, self.__class__.__name__)
-    #            for key, value in settings_class.items():
-    #                if hasattr(AuthentaConfig, k): setattr(AuthentaConfig, key, value)
 
 class Config(OverConfig):
     settings_override = 'AUTHENTA'
@@ -39,7 +32,7 @@ class Config(OverConfig):
         ht_update_by = _('Last user who modified')
         vn_error = _('Error encountered')
         ht_error = _('Detail about the error')
-        vn_method = _('authentication method')
+        vn_method = _('create method')
         vpn_method = _('authentication methods')
         vn_task = _('# Task')
         vpn_task = _('# Tasks')
@@ -151,6 +144,12 @@ class Config(OverConfig):
         verbose_name = _('Authentication and Authorization')
         login = _('Log in')
 
+# ██████╗ ██████╗  ██████╗ ██╗   ██╗██████╗ 
+#██╔════╝ ██╔══██╗██╔═══██╗██║   ██║██╔══██╗
+#██║  ███╗██████╔╝██║   ██║██║   ██║██████╔╝
+#██║   ██║██╔══██╗██║   ██║██║   ██║██╔═══╝ 
+#╚██████╔╝██║  ██║╚██████╔╝╚██████╔╝██║     
+# ╚═════╝ ╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═╝   
     class Group(OverConfig):
         list_display = ['name', 'date_create', 'date_update']
         filter_horizontal = ('permissions',)
@@ -190,6 +189,7 @@ class Config(OverConfig):
             (method_additional, _('Additional method'))
         )
         default_method = method_frontend
+        default_is_robot = False
         manager_update_by = 'manager.py'
         field_username = 'username'
         field_email = 'email'
@@ -205,10 +205,11 @@ class Config(OverConfig):
         vn_email = _('Email address')
         vn_is_active = _('Active')
         vn_is_staff = _('Staff')
+        vn_is_robot = _('Robot')
         vn_firstname = _('Firstname')
         vn_lastname = _('Lastname')
         vn_date_joined = _('Date joined')
-        vn_method = _('Authentication method')
+        vn_method = _('Create method')
         error_required_fields = _('The given field must be set: {}')
         error_is_superuser = _('Superuser must have is_superuser=True.')
         list_display = None
@@ -221,7 +222,7 @@ class Config(OverConfig):
             ((None, {'fields': ('username', 'password')})),
             ((_('Personal info'), {'fields': ('email', 'first_name', 'last_name')})),
             (_('Authentication method'), {'fields': ('method', 'additional')}),
-            (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+            (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'is_robot', 'groups', 'user_permissions')}),
             (_('API'), {'fields': ('key', )}),
             (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
             (_('Log informations'), {'fields': ('date_update', 'update_by')}),
@@ -340,6 +341,12 @@ class Config(OverConfig):
         def dir_cert(instance, filename):
             return self.certificates.format(conf.dir_cert, instance.name)
 
+# █████╗ ██████╗ ██╗
+#██╔══██╗██╔══██╗██║
+#███████║██████╔╝██║
+#██╔══██║██╔═══╝ ██║
+#██║  ██║██║     ██║
+#╚═╝  ╚═╝╚═╝     ╚═╝
     class api(OverConfig):
         backend = 'user.authenta.api'
         field_is_api = 'is_api'
@@ -348,6 +355,12 @@ class Config(OverConfig):
         def key(key_max_length):
             return ''.join(random.choice('-._~+/'+string.hexdigits) for x in range(key_max_length))
 
+#██████╗  ██████╗ ██████╗  ██████╗ ████████╗
+#██╔══██╗██╔═══██╗██╔══██╗██╔═══██╗╚══██╔══╝
+#██████╔╝██║   ██║██████╔╝██║   ██║   ██║   
+#██╔══██╗██║   ██║██╔══██╗██║   ██║   ██║   
+#██║  ██║╚██████╔╝██████╔╝╚██████╔╝   ██║   
+#╚═╝  ╚═╝ ╚═════╝ ╚═════╝  ╚═════╝    ╚═╝  
     class robot(OverConfig):
         username = 'robot'
         password = 'de76FBE368fAc.9--bfaAaA.af-a7_E5'
@@ -423,6 +436,20 @@ for method in Config.Method.method_accepted:
     if getattr(Config, method).activate is True:
         Config.Method.choices += ((getattr(Config, method).name, getattr(Config, method).option),)
         Config.Method.fieldsets += getattr(Config, method).fieldsets
+
+# ██████╗ ██╗   ██╗███████╗██████╗ ██████╗ ██╗██████╗ ███████╗
+#██╔═══██╗██║   ██║██╔════╝██╔══██╗██╔══██╗██║██╔══██╗██╔════╝
+#██║   ██║██║   ██║█████╗  ██████╔╝██████╔╝██║██║  ██║█████╗  
+#██║   ██║╚██╗ ██╔╝██╔══╝  ██╔══██╗██╔══██╗██║██║  ██║██╔══╝  
+#╚██████╔╝ ╚████╔╝ ███████╗██║  ██║██║  ██║██║██████╔╝███████╗
+# ╚═════╝   ╚═══╝  ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═════╝ ╚══════╝
+if hasattr(settings, Config.settings_override):
+    settings_class = getattr(settings, Config.settings_override)
+    for config in Config.allconf:
+        if config in settings_class:
+            for conf in settings_class[config]:
+                setattr(getattr(Config, config), conf, settings_class[config][conf])
+                print(settings_class[config][conf])
 
 class AuthentaConfig(AppConfig, Config):
     name = 'authenta'

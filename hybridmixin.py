@@ -4,7 +4,9 @@ from django.middleware.csrf import get_token
 from django.contrib import admin
 from django.contrib.auth import get_permission_codename
 from django.core.exceptions import FieldDoesNotExist
+from django.core.urlresolvers import resolve
 
+from django.contrib.auth.views import (LoginView, LogoutView)
 from django.views.generic import (DetailView, TemplateView)
 from django.views.generic.edit import (CreateView, UpdateView)
 from django.views.generic.list import ListView
@@ -45,6 +47,7 @@ class Hybrid(object):
     extension = conf.Extension.default_extension
     authorized = conf.Extension.authorized
     meta_accepted = conf.App.meta_accepted
+    update_by = True
 
     def dispatch(self, request, *args, **kwargs):
         if self.kwarg_extension in self.kwargs and self.kwargs[self.kwarg_extension] is not None:
@@ -115,9 +118,64 @@ class Hybrid(object):
             ]) for rel in relations ])) if relations else False
 
     def post(self, request, *args, **kwargs):
-        form = self.get_form()
-        form.instance.update_by = getattr(self.request.user, conf.User.username_field)
+        if self.update_by:
+            form = self.get_form()
+            form.instance.update_by = getattr(self.request.user, conf.User.username_field)
         return super(Hybrid, self).post(request)
+
+#██╗     ██╗███████╗████████╗██╗   ██╗██╗███████╗██╗    ██╗
+#██║     ██║██╔════╝╚══██╔══╝██║   ██║██║██╔════╝██║    ██║
+#██║     ██║███████╗   ██║   ██║   ██║██║█████╗  ██║ █╗ ██║
+#██║     ██║╚════██║   ██║   ╚██╗ ██╔╝██║██╔══╝  ██║███╗██║
+#███████╗██║███████║   ██║    ╚████╔╝ ██║███████╗╚███╔███╔╝
+#╚══════╝╚═╝╚══════╝   ╚═╝     ╚═══╝  ╚═╝╚══════╝ ╚══╝╚══╝
+class HybridListView(Hybrid, ListView):
+    template_name = conf.App.template_list
+
+    def response_json(self, context):
+        return JsonResponse([self.detail_json(obj) for obj in self.object_list], safe=False)
+
+    def response_txt(self, context):
+        return HttpResponse(conf.ContentType.txt_object_separator.join([self.detail_txt(obj) for obj in self.object_list]), content_type=self.contenttype.txt)
+
+    def response_csv(self, context):
+        response = HttpResponse(content_type=self.contenttype.csv)
+        writer = csv.writer(response)
+        writer.writerow(self.fields_detail)
+        for obj in self.object_list:
+            writer.writerow(self.detail_csv(obj))
+        return response
+
+#██████╗ ███████╗████████╗ █████╗ ██╗██╗    ██╗   ██╗██╗███████╗██╗    ██╗
+#██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██║██║    ██║   ██║██║██╔════╝██║    ██║
+#██║  ██║█████╗     ██║   ███████║██║██║    ██║   ██║██║█████╗  ██║ █╗ ██║
+#██║  ██║██╔══╝     ██║   ██╔══██║██║██║    ╚██╗ ██╔╝██║██╔══╝  ██║███╗██║
+#██████╔╝███████╗   ██║   ██║  ██║██║███████╗╚████╔╝ ██║███████╗╚███╔███╔╝
+#╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚══════╝ ╚═══╝  ╚═╝╚══════╝ ╚══╝╚══╝
+class HybridDetailView(Hybrid, DetailView):
+    template_name = conf.App.template_detail
+
+    def response_json(self, context):
+        return JsonResponse(self.detail_json(self.object), safe=False)
+
+    def response_txt(self, context):
+        return HttpResponse(self.detail_txt(self.object), content_type=self.contenttype.txt)
+
+    def response_csv(self, context):
+        response = HttpResponse(content_type=self.contenttype.csv)
+        writer = csv.writer(response)
+        writer.writerow(self.fields_detail)
+        writer.writerow(self.detail_csv(self.object))
+        return response
+
+#████████╗███████╗███╗   ███╗██████╗ ██╗      █████╗ ████████╗███████╗██╗   ██╗██╗███████╗██╗    ██╗
+#╚══██╔══╝██╔════╝████╗ ████║██╔══██╗██║     ██╔══██╗╚══██╔══╝██╔════╝██║   ██║██║██╔════╝██║    ██║
+#   ██║   █████╗  ██╔████╔██║██████╔╝██║     ███████║   ██║   █████╗  ██║   ██║██║█████╗  ██║ █╗ ██║
+#   ██║   ██╔══╝  ██║╚██╔╝██║██╔═══╝ ██║     ██╔══██║   ██║   ██╔══╝  ╚██╗ ██╔╝██║██╔══╝  ██║███╗██║
+#   ██║   ███████╗██║ ╚═╝ ██║██║     ███████╗██║  ██║   ██║   ███████╗ ╚████╔╝ ██║███████╗╚███╔███╔╝
+#   ╚═╝   ╚══════╝╚═╝     ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝  ╚═══╝  ╚═╝╚══════╝ ╚══╝╚══╝ 
+class HybridTemplateView(HybridDetailView, TemplateView):
+    template_name = conf.App.template_detail
 
 #██╗  ██╗██╗   ██╗██████╗ ██████╗ ██╗██████╗ ███████╗ ██████╗ ██████╗ ███╗   ███╗
 #██║  ██║╚██╗ ██╔╝██╔══██╗██╔══██╗██║██╔══██╗██╔════╝██╔═══██╗██╔══██╗████╗ ████║
@@ -158,58 +216,6 @@ class HybridForm(Hybrid):
         writer.writerow([ field.help_text for field in context[conf.App.form] ] + [ self.token ])
         return response
 
-#██████╗ ███████╗████████╗ █████╗ ██╗██╗    ██╗   ██╗██╗███████╗██╗    ██╗
-#██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██║██║    ██║   ██║██║██╔════╝██║    ██║
-#██║  ██║█████╗     ██║   ███████║██║██║    ██║   ██║██║█████╗  ██║ █╗ ██║
-#██║  ██║██╔══╝     ██║   ██╔══██║██║██║    ╚██╗ ██╔╝██║██╔══╝  ██║███╗██║
-#██████╔╝███████╗   ██║   ██║  ██║██║███████╗╚████╔╝ ██║███████╗╚███╔███╔╝
-#╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚══════╝ ╚═══╝  ╚═╝╚══════╝ ╚══╝╚══╝
-class HybridDetailView(Hybrid, DetailView):
-    template_name = conf.App.template_detail
-
-    def response_json(self, context):
-        return JsonResponse(self.detail_json(self.object), safe=False)
-
-    def response_txt(self, context):
-        return HttpResponse(self.detail_txt(self.object), content_type=self.contenttype.txt)
-
-    def response_csv(self, context):
-        response = HttpResponse(content_type=self.contenttype.csv)
-        writer = csv.writer(response)
-        writer.writerow(self.fields_detail)
-        writer.writerow(self.detail_csv(self.object))
-        return response
-
-#████████╗███████╗███╗   ███╗██████╗ ██╗      █████╗ ████████╗███████╗██╗   ██╗██╗███████╗██╗    ██╗
-#╚══██╔══╝██╔════╝████╗ ████║██╔══██╗██║     ██╔══██╗╚══██╔══╝██╔════╝██║   ██║██║██╔════╝██║    ██║
-#   ██║   █████╗  ██╔████╔██║██████╔╝██║     ███████║   ██║   █████╗  ██║   ██║██║█████╗  ██║ █╗ ██║
-#   ██║   ██╔══╝  ██║╚██╔╝██║██╔═══╝ ██║     ██╔══██║   ██║   ██╔══╝  ╚██╗ ██╔╝██║██╔══╝  ██║███╗██║
-#   ██║   ███████╗██║ ╚═╝ ██║██║     ███████╗██║  ██║   ██║   ███████╗ ╚████╔╝ ██║███████╗╚███╔███╔╝
-#   ╚═╝   ╚══════╝╚═╝     ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝  ╚═══╝  ╚═╝╚══════╝ ╚══╝╚══╝ 
-class HybridTemplateView(HybridDetailView, TemplateView):
-    template_name = conf.App.template_detail
-
-#██╗     ██╗███████╗████████╗██╗   ██╗██╗███████╗██╗    ██╗
-#██║     ██║██╔════╝╚══██╔══╝██║   ██║██║██╔════╝██║    ██║
-#██║     ██║███████╗   ██║   ██║   ██║██║█████╗  ██║ █╗ ██║
-#██║     ██║╚════██║   ██║   ╚██╗ ██╔╝██║██╔══╝  ██║███╗██║
-#███████╗██║███████║   ██║    ╚████╔╝ ██║███████╗╚███╔███╔╝
-#╚══════╝╚═╝╚══════╝   ╚═╝     ╚═══╝  ╚═╝╚══════╝ ╚══╝╚══╝
-class HybridListView(Hybrid, ListView):
-    def response_json(self, context):
-        return JsonResponse([self.detail_json(obj) for obj in self.object_list], safe=False)
-
-    def response_txt(self, context):
-        return HttpResponse(conf.ContentType.txt_object_separator.join([self.detail_txt(obj) for obj in self.object_list]), content_type=self.contenttype.txt)
-
-    def response_csv(self, context):
-        response = HttpResponse(content_type=self.contenttype.csv)
-        writer = csv.writer(response)
-        writer.writerow(self.fields_detail)
-        for obj in self.object_list:
-            writer.writerow(self.detail_csv(obj))
-        return response
-
 # ██████╗██████╗ ███████╗ █████╗ ████████╗███████╗██╗   ██╗██╗███████╗██╗    ██╗
 #██╔════╝██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██╔════╝██║   ██║██║██╔════╝██║    ██║
 #██║     ██████╔╝█████╗  ███████║   ██║   █████╗  ██║   ██║██║█████╗  ██║ █╗ ██║
@@ -227,6 +233,24 @@ class HybridCreateView(HybridForm, CreateView):
 # ╚═════╝ ╚═╝     ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝  ╚═══╝  ╚═╝╚══════╝ ╚══╝╚══╝
 class HybridUpdateView(HybridForm, UpdateView):
     pass
+
+from django.urls import reverse
+from django.shortcuts import redirect
+class HybridLoginView(HybridForm, LoginView):
+    template_name = 'authenta/login.html'
+    update_by = False
+
+    def dispatch(self, request, *args, **kwargs):
+        dispatch = super(HybridLoginView, self).dispatch(request)
+        if request.user.is_authenticated():
+            return redirect(reverse('authenta:Profile', kwargs={self.kwarg_extension: self.extension}))
+        return dispatch
+
+    def get_context_data(self, **kwargs):
+        context = super(HybridLoginView, self).get_context_data(**kwargs)
+        context.update({ 'ldap' : conf.ldap.activate, 'current_url': resolve(self.request.path_info).url_name })
+        print(context)
+        return context
 
 class HybridAdminView(object):
     def get_context_data(self, **kwargs):

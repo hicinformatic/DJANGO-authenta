@@ -135,6 +135,7 @@ class User(AbstractUser):
     email = models.EmailField(conf_user.vn_email, blank=conf_user.null_email, null=conf_user.null_email, unique=conf_user.unique_email)
     is_active = models.BooleanField(conf_user.vn_is_active, default=conf_user.default_is_active)
     is_staff = models.BooleanField(conf_user.vn_is_staff, default=conf_user.default_is_staff)
+    is_robot = models.BooleanField(conf_user.vn_is_robot, default=conf_user.default_is_robot)
     first_name = models.CharField(conf_user.vn_firstname, blank=conf_user.null_firstname, max_length=30, null=conf_user.null_firstname)
     last_name = models.CharField(conf_user.vn_lastname, blank=conf_user.null_lastname, max_length=30, null=conf_user.null_lastname)
     date_joined = models.DateTimeField(conf_user.vn_date_joined, auto_now_add=True, editable=False)

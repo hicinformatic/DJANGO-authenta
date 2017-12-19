@@ -1,6 +1,7 @@
 from .apps import AuthentaConfig as conf
 from django.contrib import admin
 from django.contrib.admin import sites
+from django.http import HttpResponseRedirect
 #from django.contrib.auth.models import Group
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
 
@@ -38,7 +39,6 @@ class AuthentaAdminSite(admin.AdminSite):
         context.update(extra_context or {})
 
         from .forms import AuthenticationLDAPForm
-        from django.contrib.admin.forms import AdminAuthenticationForm
         context.update({ 'ldap' : conf.ldap.activate })      
         login_form = AuthenticationLDAPForm if current_url == 'ldap_login' else AdminAuthenticationForm
 
