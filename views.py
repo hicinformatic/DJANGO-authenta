@@ -11,7 +11,7 @@ from .hybridmixin import (
     FakeModel,
     HybridAdminView)
 from .models import (Method, Task, User)
-from .forms import MethodFormFunction
+from .forms import MethodFormFunction, AuthenticationLDAPForm
 
 from datetime import timedelta
 
@@ -119,30 +119,32 @@ class TaskPurge(HybridTemplateView):
 class SignIn(HybridLoginView):
     pass
 
-from .forms import AuthenticationLDAPForm
 class SignInLDAP(HybridLoginView):
     form_class = AuthenticationLDAPForm
-    def get_context_data(self, **kwargs):
-        context = super(SignInLDAP, self).get_context_data(**kwargs)
-        #context['form'] = AuthenticationLDAPForm
-        return context
 
 @method_decorator(login_required, name='dispatch')
 class Accounts(HybridListView):
     model = User
-    fields_detail = ['username', 'date_joined']
+    fields_detail = conf.User.fields_list
+    title = conf.User.title_list
+    url_detail = conf.User.url_detail
+
+    def get_context_data(self, **kwargs):
+        context = super(Accounts, self).get_context_data(**kwargs)
+        context.update({'url_detail': self.url_detail })
+        return context
 
 @method_decorator(login_required, name='dispatch')
 class Profile(HybridDetailView):
-    fields_detail = ['username', 'first_name', 'last_name', 'date_joined', 'key']
+    fields_detail = conf.User.fields_detail
+    groups = conf.User.fields_groups 
+    user_permissions = conf.User.fields_permissions
     model = User
+    template_name = conf.User.template_profile
 
     def get_context_data(self, **kwargs):
-        self.object.username = self.request.user.username
-        self.object.date_joined = self.request.user.date_joined
-        self.title = 'Profile'
-        self.title_detail = self.object.username
         context = super(Profile, self).get_context_data(**kwargs)
+        context.update({'url_avatar': conf.App.url_avatar})
         return context
 
 # █████╗ ██████╗ ███╗   ███╗██╗███╗   ██╗

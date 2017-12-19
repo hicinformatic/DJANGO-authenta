@@ -1,0 +1,73 @@
+{% extends "authenta/authenta.html" %}
+{% load i18n static authenta_filters %}
+
+{% block title %}{% trans 'Detail' %}{% endblock %}
+
+{% block extrastyle %}
+<link rel="stylesheet" type="text/css" href="{% static "authenta/css/detail.css" %}" />
+<style>
+#detail > h1 { background-color: {{ bg_dark }}; color: {{ bg_light }}; text-decoration: none; }
+#detail article > h2 { background-color: {{ bg_darkless }}; color: {{ bg_light }}; text-decoration: none; }
+#detail article { background-color: rgba(0, 0, 0, 0.1); }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<section id="detail" class="wr mrga">
+    <h1 class="wr pad10 mrgb20">{% trans 'Profile' %}</h1>
+    <div class="wr dib1 c90 mrgb20">
+        <img class="wr w30 pad10 vam" src="{% static url_avatar %}"><!--
+        --><div class="wr w70 vam">
+            <article>
+                <h2 class="wr pad5">{% trans 'Personal' %}</h2>
+                <table class="wr wp00">
+                    <tr><td>{% trans 'Username' %}</td><td>{{ object.username|title }}</td></tr>
+                    <tr><td>{% trans 'Firstname' %}</td><td>{{ object.first_name|title }}</td></tr>
+                    <tr><td>{% trans 'Lastname' %}</td><td>{{ object.last_name|title }}</td></tr>
+                    <tr><td>{% trans 'Signup' %}</td><td>{{ object.date_joined }}</td></tr>
+                </table>
+            </article>
+
+            <br>
+            <article>
+                <h2 class="wr pad5">{% trans 'Access' %}</h2>
+                <table class="wr wp00">
+                    <tr><td>{% trans 'Staff' %}</td><td>{{ object.is_staff|boolean_icon }}</td></tr>
+                    <tr><td>{% trans 'Admin' %}</td><td>{{ object.is_superuser|boolean_icon }}</td></tr>
+                    <tr><td>{% trans 'Robot' %}</td><td>{{ object.is_robot|boolean_icon }}</td></tr>
+                    {% if request.user.id == object.id or request.user.is_superuser %}
+                    <tr><td>{% trans 'API Key' %}</td><td>{{ object.key }}</td></tr>
+                    {% endif %}
+                </table>
+            </article>
+        </div>
+    </div>
+
+
+    <div class="wr dib1 txc">
+        <article class="wr w45 mrgr5 vat">
+            <h2>{% trans 'Groups' %}</h2>
+            <table>
+                {% for group in object.groups.all %}
+                <tr><td>{{ group }}</td></tr>
+                {% empty %}
+                <tr><td>{% trans 'no affected group' %}</td></tr>
+                {% endfor %}
+            </table>
+        </article><!--
+
+        --><article class="wr w45 vat">
+            <h2>{% trans 'Permissions' %}</h2>
+            <table>
+                {% for permission in object.permissions.all %}
+                <tr><td>{{ permission }}</td></tr>
+                {% empty %}
+                <tr><td>{% trans 'no affected permission' %}</td></tr>
+                {% endfor %}
+            </table>
+        </article>
+    </div>
+
+</section>
+{% endblock %}

@@ -25,7 +25,7 @@
 {% block content %}
 <div id="login" class="wr mrga">
 
-    <img id="logo" class="wr db mrga" src="{% static logo_url %}">
+    <img id="logo" class="wr db mrga" src="{% static url_logo %}">
 
     {% if ldap and current_url == 'SignIn' %}
     <a class="wr txc db wp50 pad5 mrgb5" href="{% url 'authenta:SignInLDAP' %}">{% trans 'Connection LDAP' %}</a>

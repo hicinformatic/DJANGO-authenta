@@ -13,10 +13,10 @@
 
 {% block navbar %}
 <nav id="menu" class="wr dib1">
-    <img id="logo"s src="{% static logo_url %}"><!--
+    <img id="logo"s src="{% static url_logo %}"><!--
     --><a class="wr padr10 padl10 lh50" href="#">{{ request.user.username }}</a><!--
-    -->{% if request.user.is_staff %}<a class="wr padr10 padl10 lh50" href="#">Admin</a>{% endif %}<!--
-    --><a class="wr padr10 padl10 lh50" href="#">Users</a>
+    -->{% if request.user.is_staff %}<a class="wr padr10 padl10 lh50" href="{% url 'admin:index' %}">Admin</a>{% endif %}<!--
+    --><a class="wr padr10 padl10 lh50" href="{% url 'authenta:Accounts' %}">Users</a>
 </nav>
 <br>
 {% endblock %}

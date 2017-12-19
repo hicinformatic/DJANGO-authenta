@@ -1,9 +1,31 @@
-{% load authenta_filters %}
-{% for object in object_list %}
-<ul>
-    {% for field in fields %}
-    <li>{% getattribute object field %}</li>
+{% extends "authenta/authenta.html" %}
+{% load i18n static authenta_filters %}
+
+{% block title %}{% trans 'Detail' %}{% endblock %}
+
+{% block extrastyle %}
+<style>
+#list { max-width: 800px; }
+#list > h1 { background-color: {{ bg_dark }}; color: {{ bg_light }};}
+#list header { background-color: {{ bg_darkless }}; color: {{ bg_light }}; }
+#list a { display: block; background-color: rgba(0, 0, 0, 0.1); text-decoration: none; color: {{ bg_dark }};}
+</style>
+{% endblock %}
+
+{% block content %}
+<section id="list" class="wr mrga">
+    {% if title %}<h1 class="wr pad10 mrgb10">{{ title }}</h1>{% endif %}
+    
+    <header class="wr dib1 wa pad5">
+         {% for field in fields %}<span>{{ field|title }}</span>{% endfor %} 
+    </header>
+
+    {% for object in object_list %}
+    <a href="{% url url_detail object.id '.html' %}">
+        <article class="wr dib1 wa pad5 bdb1">
+        {% for field in fields %}<p>{% getattribute object field %}</p>{% endfor %}
+        </article>
+    </a>    
     {% endfor %}
-</ul>    
-{% empty %}
-{% endfor %}
+</section>
+{% endblock %}

@@ -152,7 +152,7 @@ class User(AbstractUser):
     class Meta:
         verbose_name = conf.User.verbose_name
         verbose_name_plural = conf.User.verbose_name_plural
-
+        ordering = [conf.User.username_field]
         permissions = (
             (conf.api.field_is_api, conf.api.ht_is_api),
             (conf.robot.field_is_local_robot, conf.robot.ht_is_local_robot),

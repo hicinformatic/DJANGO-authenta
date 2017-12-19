@@ -66,7 +66,7 @@ class Hybrid(object):
             'current_url': resolve(self.request.path_info).url_name,
             'title': self.title,
             'title_detail': self.title_detail,
-            'logo_url': conf.App.logo_url,
+            'url_logo': conf.App.url_logo,
             'bg_dark': conf.App.bg_dark,
             'bg_darkless': conf.App.bg_darkless,
             'bg_light': conf.App.bg_light,

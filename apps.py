@@ -50,7 +50,8 @@ class Config(OverConfig):
         bg_light = '#fff'
         bg_dark = '#5d1215'
         bg_darkless = '#9b1f23'
-        logo_url = 'authenta/img/your_logo_here.svg'
+        url_logo = 'authenta/img/your_logo_here.svg'
+        url_avatar = 'authenta/img/your_avatar_here.svg'
 
 #██╗      ██████╗  ██████╗ 
 #██║     ██╔═══██╗██╔════╝ 
@@ -203,6 +204,12 @@ class Config(OverConfig):
         field_is_staff = 'is_staff'
         field_is_authenticated = 'is_authenticated'
         field_method = 'method'
+        fields_groups = ['id', 'name']
+        fields_permissions = ['id', '__str__']
+        fields_detail = ['username', 'first_name', 'last_name', 'date_joined', 'is_staff', 'is_superuser', 'is_robot', 'groups', 'user_permissions']
+        fields_list = ['username', 'date_joined']
+        title_list = 'User List'
+        url_detail = 'authenta:Profile'
         normalize = 'NFKC'
         verbose_name = _('user')
         verbose_name_plural = _('users')
@@ -223,6 +230,7 @@ class Config(OverConfig):
         add_fieldsets = None
         key_min_length = 10
         key_max_length = 32
+        template_profile = 'authenta/profile.html'
         fieldsets = (
             ((None, {'fields': ('username', 'password')})),
             ((_('Personal info'), {'fields': ('email', 'first_name', 'last_name')})),
