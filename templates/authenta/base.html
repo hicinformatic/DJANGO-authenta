@@ -1,0 +1,16 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="en-gb">
+    <head>
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" type="text/css" href="{% static "authenta/css/wr-easy.css" %}" />
+    {% block style %}{% endblock %}
+    {% block head %}{% endblock %}
+    </head>
+    <body>
+        {% block navbar %}{% endblock %}
+        {% block content %}{% endblock %}
+    </body>
+</html>
+
+

@@ -1,0 +1,22 @@
+{% extends "authenta/base.html" %}
+{% load i18n static authenta_filters %}
+
+{% block style %}
+<link rel="stylesheet" type="text/css" href="{% static "authenta/css/menu.css" %}" />
+<style>
+#menu, #menu > a { background-color: {{ bg_dark }};  color: {{ bg_light }}; text-decoration: none; }
+#menu > a:hover { background-color: {{bg_darkless}}; }
+</style>
+{% block extrastyle %}{% endblock %}
+{% block extrahead %}{% endblock %}
+{% endblock %}
+
+{% block navbar %}
+<nav id="menu" class="wr dib1">
+    <img id="logo"s src="{% static logo_url %}"><!--
+    --><a class="wr padr10 padl10 lh50" href="#">{{ request.user.username }}</a><!--
+    -->{% if request.user.is_staff %}<a class="wr padr10 padl10 lh50" href="#">Admin</a>{% endif %}<!--
+    --><a class="wr padr10 padl10 lh50" href="#">Users</a>
+</nav>
+<br>
+{% endblock %}

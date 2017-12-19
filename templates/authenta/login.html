@@ -1,109 +1,84 @@
+{% extends "authenta/base.html" %}
 {% load i18n static %}
 
-<html>
-    <head>
-    <meta charset="UTF-8">
-        <title>Title of the document</title>
-        <link rel="stylesheet" type="text/css" href="{% static "authenta/css/wr-easy.css" %}" />
-        <link rel="stylesheet" type="text/css" href="{% static "authenta/css/wr-easy.css" %}" />
-        <style>
-        #container {
-            min-width: 500px;
-            border-radius: 5px;
-            border: 1px solid #eaeaea;
-            overflow: hidden;
-        }
+{% block title %}{% trans 'Login' %}{% endblock %}
 
-        #container > h1 {
-            line-height: 40px;
-            background-color: #800000;
-            color: #fff;
-            font-size: 18px;
-            padding: 5px 15px;
-        }
-        #container > #content { padding: 20px; }
-        #container > #content > a {
-            color: #ffffff;
-            background-color: #cc0000;
-            display: block;
-            padding: 5px;
-            text-decoration: none;
-        }
-        #container > #content > a:hover { background-color: #800000; }
-        #container > #content > h2 { padding: 15px 0 5px 0; }
-        #container > #content > hr {
-            color: #eee;
-            background-color: #eee;
-            height: 1px;
-            border: none;
-            margin-bottom: 5px;
-        }
-        #container > #content label { display: block; }
-        </style>
-    </head>
-    <body>
-        <div id="container" class="wr ced">
-            <h1>Login</h1>
-            {% block content %}
-                {% if form.errors and not form.non_field_errors %}
-                <p class="errornote">
-                {% if form.errors.items|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
-                </p>
-                {% endif %}
+{% block style %}
+<link rel="stylesheet" type="text/css" href="{% static "authenta/css/login.css" %}" />
+<style>
+#login > h1,
+#login > a:hover,
+#login > form > .submit-row > input { background-color: {{ bg_dark }}; }
+#login > form,
+#login > a { background-color: {{ bg_darkless }}; }
+#login > form > .errornote { background-color: {{ bg_light }}; }
+#login > h1,
+#login > a,
+#login > form > .form-row > label,
+#login > form > .submit-row > input { color: {{ bg_light }}; }
+#login > form > .errornote { color: {{ bg_darkless }}; }
+#login > form > .errornote,
+#login > form > .form-row > input { border-color: {{ bg_dark }}; }
+</style>
+{% endblock %}
 
-                {% if form.non_field_errors %}
-                <p class="errornote">
-                {% for error in form.non_field_errors %}
-                    {{ error }}<br/>
-                {% endfor %}
-                </p>
-                {% endif %}
+{% block content %}
+<div id="login" class="wr mrga">
 
-                <div id="content">
+    <img id="logo" class="wr db mrga" src="{% static logo_url %}">
 
-                {% if user.is_authenticated %}
-                <p class="errornote">
-                {% blocktrans trimmed %}
-                    You are authenticated as {{ username }}, but are not authorized to
-                    access this page. Would you like to login to a different account?
-                {% endblocktrans %}
-                </p>
-                {% endif %}
+    {% if ldap and current_url == 'SignIn' %}
+    <a class="wr txc db wp50 pad5 mrgb5" href="{% url 'authenta:SignInLDAP' %}">{% trans 'Connection LDAP' %}</a>
+    {% elif ldap and current_url == 'SignInLDAP' %}
+    <a class="wr txc db wp50 pad5 mrgb5" href="{% url 'authenta:SignIn' %}">{% trans 'Connection standard' %}</a>
+    {% endif %}
 
-                {% if ldap and current_url == 'SignIn' %}
-                <a class="wr txc" href="{% url 'authenta:SignInLDAP' %}">LDAP</a>
-                <h2>{% trans 'Connexion Standard' %}</h2>
-                <hr>
-                {% elif ldap and current_url == 'SignInLDAP' %}
-                <a class="wr txc" href="{% url 'authenta:SignIn' %}">Standard</a>
-                <h2>{% trans 'Connexion LDAP' %}</h2>
-                <hr>
-                {% endif %}
+    <h1 class="wr txc lh50">{% if ldap and current_url == 'SignInLDAP' %}{% trans 'Login - LDAP' %}{% else %}{% trans 'Login - Standard' %}{% endif %}</h1>
+    
+    <form action="{{ app_path }}" method="post" id="login-form" class="wr mrgb2">{% csrf_token %}
+                    
 
-                <form action="{{ app_path }}" method="post" id="login-form">{% csrf_token %}
-                    <div class="form-row">
-                        {{ form.username.errors }}
-                        {{ form.username.label_tag }} {{ form.username }}
-                    </div>
-                    <div class="form-row">
-                        {{ form.password.errors }}
-                        {{ form.password.label_tag }} {{ form.password }}
-                        <input type="hidden" name="next" value="{{ next }}" />
-                    </div>
-                    {% url 'admin_password_reset' as password_reset_url %}
-                    {% if password_reset_url %}
-                    <div class="password-reset-link">
-                        <a href="{{ password_reset_url }}">{% trans 'Forgotten your password or username?' %}</a>
-                    </div>
-                    {% endif %}
-                    <div class="submit-row">
-                        <label>&nbsp;</label><input type="submit" value="{% trans 'Log in' %}" />
-                    </div>
-                </form>
+        {% if form.errors and not form.non_field_errors %}
+        <p class="errornote">
+        {% if form.errors.items|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
+        </p>
+        {% endif %}
 
-                <p class="authenta">{% trans '*Assisted by Authenta' %}</p>
-            </div>
-            {% endblock %}
+        {% if form.non_field_errors %}
+        <p class="errornote">{% for error in form.non_field_errors %}{{ error }}<br/>{% endfor %}</p>
+        {% endif %}
+
+        {% if user.is_authenticated %}
+        <p class="errornote">
+        {% blocktrans trimmed %}
+            You are authenticated as {{ username }}, but are not authorized to
+            access this page. Would you like to login to a different account?
+        {% endblocktrans %}
+        </p>
+        {% endif %}
+
+        <div class="form-row wr c80 padb10">
+            {{ form.username.errors }}
+            {{ form.username.label_tag }} {{ form.username }}
         </div>
-    </body>
-</html>
+
+        <div class="wr bdb1"></div>
+
+        <div class="form-row wr c80 padt10">
+            {{ form.password.errors }}
+            {{ form.password.label_tag }} {{ form.password }}
+            <input type="hidden" name="next" value="{{ next }}" />
+        </div>
+        {% url 'admin_password_reset' as password_reset_url %}
+        {% if password_reset_url %}
+        <div class="password-reset-link">
+            <a href="{{ password_reset_url }}">{% trans 'Forgotten your password or username?' %}</a>
+        </div>
+        {% endif %}
+        <div class="submit-row">
+            <label>&nbsp;</label><input class="wr db c60 wp60 pad20" type="submit" value="{% trans 'Log in' %}" />
+        </div>
+    </form>
+    <p class="authenta wr txr f8">{% trans '*Assisted by Authenta' %}</p>
+</div>
+{% endblock %}

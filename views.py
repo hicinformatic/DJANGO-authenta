@@ -133,14 +133,16 @@ class Accounts(HybridListView):
     fields_detail = ['username', 'date_joined']
 
 @method_decorator(login_required, name='dispatch')
-class Profile(HybridTemplateView):
-    fields_detail = ['username', 'date_joined']
-    object = FakeModel()
+class Profile(HybridDetailView):
+    fields_detail = ['username', 'first_name', 'last_name', 'date_joined', 'key']
+    model = User
 
     def get_context_data(self, **kwargs):
-        context = super(Profile, self).get_context_data(**kwargs)
         self.object.username = self.request.user.username
         self.object.date_joined = self.request.user.date_joined
+        self.title = 'Profile'
+        self.title_detail = self.object.username
+        context = super(Profile, self).get_context_data(**kwargs)
         return context
 
 # █████╗ ██████╗ ███╗   ███╗██╗███╗   ██╗

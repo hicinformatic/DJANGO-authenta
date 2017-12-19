@@ -1,6 +1,26 @@
-{% load authenta_filters %}
-<ul>
-    {% for field in fields %}
-    <li>{% getattribute object field %}</li>
-    {% endfor %}
-</ul>
+{% extends "authenta/authenta.html" %}
+{% load i18n static authenta_filters %}
+
+{% block title %}{% trans 'Detail' %}{% endblock %}
+
+{% block extrastyle %}
+<link rel="stylesheet" type="text/css" href="{% static "authenta/css/detail.css" %}" />
+<style>
+#detail > h1 { background-color: {{ bg_dark }};  color: {{ bg_light }}; text-decoration: none; }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<section id="detail" class="wr mrga">
+    {% if title %}<h1>{{ title }}</h1>{% endif %}
+    <article>
+        {% if title_detail %}<h2>{{ title_detail }}</h2>{% endif %}
+        <table>
+        {% for field in fields %}
+            <tr><td>{{ field }}</td><td>{% getattribute object field %}</td></tr>
+        {% endfor %}
+        </table>
+    </article>
+</section>
+{% endblock %}

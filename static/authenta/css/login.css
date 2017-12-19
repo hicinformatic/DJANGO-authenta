@@ -1,0 +1,8 @@
+#login { max-width: 500px; }
+#login > #logo { max-width: 500px; max-height: 100px; }
+#login > a { text-decoration: none; }
+#login > form { padding: 10px 10px 0 10px; }
+#login > form > .errornote { border: 2px solid ; border-radius: 4px;  padding: 5px; margin-bottom: 10px;}
+#login > form > .form-row > label { display: block;  margin-bottom: 5px;}
+#login > form > .form-row > input { border: 1px solid ; border-radius: 4px; padding: 5px 6px; margin-top: 0; width: 100%; font-size: 14px; }
+#login > form > .submit-row > input { border: none; font-size: 14px; }

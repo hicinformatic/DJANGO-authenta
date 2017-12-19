@@ -48,6 +48,8 @@ class Hybrid(object):
     authorized = conf.Extension.authorized
     meta_accepted = conf.App.meta_accepted
     update_by = True
+    title = None
+    title_detail = None
 
     def dispatch(self, request, *args, **kwargs):
         if self.kwarg_extension in self.kwargs and self.kwargs[self.kwarg_extension] is not None:
@@ -59,7 +61,16 @@ class Hybrid(object):
     def get_context_data(self, **kwargs):
         logger('debug', 'method: {}, view: {}'.format(self.request.method, self.request.resolver_match.view_name))
         context = super(Hybrid, self).get_context_data(**kwargs)
-        context[self.object_fields] = self.fields_detail
+        context.update({
+            self.object_fields: self.fields_detail,
+            'current_url': resolve(self.request.path_info).url_name,
+            'title': self.title,
+            'title_detail': self.title_detail,
+            'logo_url': conf.App.logo_url,
+            'bg_dark': conf.App.bg_dark,
+            'bg_darkless': conf.App.bg_darkless,
+            'bg_light': conf.App.bg_light,
+        })
         return context
 
     def render_to_response(self, context):
@@ -243,13 +254,12 @@ class HybridLoginView(HybridForm, LoginView):
     def dispatch(self, request, *args, **kwargs):
         dispatch = super(HybridLoginView, self).dispatch(request)
         if request.user.is_authenticated():
-            return redirect(reverse('authenta:Profile', kwargs={self.kwarg_extension: self.extension}))
+            return redirect(reverse('authenta:Profile', kwargs={self.kwarg_extension: self.extension, 'pk': self.request.user.id }))
         return dispatch
 
     def get_context_data(self, **kwargs):
         context = super(HybridLoginView, self).get_context_data(**kwargs)
-        context.update({ 'ldap' : conf.ldap.activate, 'current_url': resolve(self.request.path_info).url_name })
-        print(context)
+        context.update({'ldap' : conf.ldap.activate,})
         return context
 
 class HybridAdminView(object):

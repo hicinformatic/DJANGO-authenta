@@ -47,6 +47,11 @@ class Config(OverConfig):
         form = 'form'
         form_token = 'token'
 
+        bg_light = '#fff'
+        bg_dark = '#5d1215'
+        bg_darkless = '#9b1f23'
+        logo_url = 'authenta/img/your_logo_here.svg'
+
 #██╗      ██████╗  ██████╗ 
 #██║     ██╔═══██╗██╔════╝ 
 #██║     ██║   ██║██║  ███╗
