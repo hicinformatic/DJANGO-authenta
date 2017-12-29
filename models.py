@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.core.validators import MinValueValidator, MaxValueValidator, MinLengthValidator, MaxLengthValidator
 
@@ -143,7 +142,7 @@ class User(AbstractUser):
     update_by = models.CharField(conf.App.vn_update_by, editable=False, max_length=254)
     method = models.CharField(conf_user.vn_method, choices=conf_user.choices_user_create_method, default=conf_user.default_method, max_length=15)
     additional = models.ManyToManyField(Method, blank=True)
-    key = models.CharField(default=conf.api.key(conf_user.key_max_length), max_length=32, unique=True, validators=[MaxLengthValidator(conf_user.key_max_length), MinLengthValidator(conf_user.key_min_length),], verbose_name=_('Authentication key'),)
+    key = models.CharField(default=conf.api.key(conf_user.key_max_length), max_length=32, unique=True, validators=[MaxLengthValidator(conf_user.key_max_length), MinLengthValidator(conf_user.key_min_length),], verbose_name=conf.User.vn_key,)
 
     objects = UserManager()
     USERNAME_FIELD = conf_user.username_field

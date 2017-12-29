@@ -2,7 +2,7 @@ from django.apps import AppConfig
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 
-import datetime, syslog, os, hashlib, sys, random, string
+import datetime, syslog, os, sys, random, string
 
 class OverConfig(object):
     allconf = ['Task', 'robot', 'api', 'ldap', 'Method', 'User', 'Group', 'Admin', 'ContentType', 'Extension', 'Log', 'App']
@@ -222,6 +222,7 @@ class Config(OverConfig):
         vn_lastname = _('Lastname')
         vn_date_joined = _('Date joined')
         vn_method = _('Create method')
+        vn_key = _('Authentication key')
         error_required_fields = _('The given field must be set: {}')
         error_is_superuser = _('Superuser must have is_superuser=True.')
         list_display = None
@@ -486,7 +487,7 @@ class AuthentaConfig(AppConfig, Config):
         if self.Extension.regex is None:
             self.Extension.regex = '|'.join([ext for ext in self.Extension.authorized])
         self.logger('debug', 'Extensions: %s' % self.Extension.regex)
-        self.logger('debug', 'Methodsl: %s' % self.Method.choices)
+        self.logger('debug', 'Methods: %s' % self.Method.choices)
         self.Task.view_absolute = self.Task.view_absolute.format(self.App.namespace)
         self.Task.purge_number+=1
         self.Method.view_absolute = self.Method.view_absolute.format(self.App.namespace)

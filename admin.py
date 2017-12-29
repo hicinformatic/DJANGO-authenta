@@ -1,14 +1,17 @@
-from .apps import AuthentaConfig as conf
 from django.contrib import admin
 from django.contrib.admin import sites
 from django.http import HttpResponseRedirect
 #from django.contrib.auth.models import Group
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
+from django.views.decorators.cache import never_cache
+from django.http import (HttpResponse, JsonResponse)
+from django.conf.urls import url
 
+from .apps import AuthentaConfig as conf
 from .forms import MethodAdminForm
 from .models import (Method, Group as CustomGroup, User as CustomUser, Task)
+from .views import MethodAdminCheck
 
-from django.views.decorators.cache import never_cache
 class AuthentaAdminSite(admin.AdminSite):
     site_header = conf.Admin.site_header
     index_title = conf.Admin.index_title
@@ -79,10 +82,6 @@ class CustomUserAdmin(OverAdmin, UserAdmin):
 class CustomGroup(GroupAdmin):
     pass
 
-
-from django.http import (HttpResponse, JsonResponse)
-from django.conf.urls import url
-from .views import MethodAdminCheck
 formatter = conf.formatter(conf)
 @admin.register(Method)
 class MethodAdmin(OverAdmin, admin.ModelAdmin):
