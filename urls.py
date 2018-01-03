@@ -35,6 +35,8 @@ urlpatterns.append(url(r'^{name}/task/purge(\.|/)?(?P<extension>({regex_extensio
 #╚██████╔╝███████║███████╗██║  ██║
 # ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝
 urlpatterns.append(url(r'^accounts/login(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.SignIn.as_view(), name='SignIn'))
-urlpatterns.append(url(r'^accounts/login/ldap(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.SignInLDAP.as_view(), name='SignInLDAP'))
+urlpatterns.append(url(r'^accounts/logout(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.SignOut.as_view(), name='SignOut'))
+if conf.ldap.activate:
+    urlpatterns.append(url(r'^accounts/login/ldap(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.SignInLDAP.as_view(), name='SignInLDAP'))
 urlpatterns.append(url(r'^accounts(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.Accounts.as_view(), name='Accounts'))
 urlpatterns.append(url(r'^accounts/profile/(?P<pk>\d+)(\.|/)?(?P<extension>({regex_extension}))?/?$'.format(**formatter), views.Profile.as_view(), name='Profile'))

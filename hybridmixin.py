@@ -262,6 +262,9 @@ class HybridLoginView(HybridForm, LoginView):
         context.update({'ldap' : conf.ldap.activate,})
         return context
 
+class HybridLogoutView(Hybrid, LogoutView):
+    pass
+
 class HybridAdminView(object):
     def get_context_data(self, **kwargs):
         context = super(HybridAdminView, self).get_context_data(**kwargs)

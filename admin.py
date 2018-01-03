@@ -55,7 +55,8 @@ class AuthentaAdminSite(admin.AdminSite):
 
     def get_urls(self):
         urlpatterns = super(AuthentaAdminSite, self).get_urls()
-        urlpatterns.append(url(r'^login/ldap/$', self.login, name='ldap_login'))
+        if conf.ldap.activate:
+            urlpatterns.append(url(r'^login/ldap/$', self.login, name='ldap_login'))
         return urlpatterns
 
 mysite = AuthentaAdminSite()

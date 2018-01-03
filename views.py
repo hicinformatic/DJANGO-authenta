@@ -7,7 +7,8 @@ from .apps import AuthentaConfig as  conf
 from .decorators import is_robot_required, is_superuser_required
 from .hybridmixin import (
     HybridDetailView, HybridTemplateView, HybridListView,
-    HybridCreateView, HybridUpdateView, HybridLoginView,
+    HybridCreateView, HybridUpdateView, 
+    HybridLoginView, HybridLogoutView,
     FakeModel,
     HybridAdminView)
 from .models import (Method, Task, User)
@@ -121,6 +122,9 @@ class SignIn(HybridLoginView):
 
 class SignInLDAP(HybridLoginView):
     form_class = AuthenticationLDAPForm
+
+class SignOut(HybridLogoutView):
+    template_name = 'authenta/logout.html'
 
 @method_decorator(login_required, name='dispatch')
 class Accounts(HybridListView):

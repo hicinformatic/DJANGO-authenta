@@ -1,0 +1,39 @@
+{% extends "authenta/base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans 'Login' %}{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" type="text/css" href="{% static "authenta/css/login.css" %}" />
+<style>
+#login > h1 { background-color: {{ bg_dark }}; }
+#login > article { background-color: {{ bg_darkless }}; }
+#login > h1,
+#login > article > div > p,
+#login > article > div > a { color: {{ bg_light }}; }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="login" class="wr mrga">
+
+    <img id="logo" class="wr db mrga" src="{% static url_logo %}">
+
+    <h1 class="wr txc lh50">{% trans 'Logout' %}</h1>
+    
+    <article method="post" id="logout" class="wr mrgb2 txc">{% csrf_token %}
+        <div class="wr pad10">
+            <p>{% trans 'You are now disconnected' %}</p>
+        </div>
+
+        <div class="wr bdb1"></div>
+
+        <div class="wr pad10">
+            <a href="{% url 'authenta:SignIn' %}">{% trans 'Login again' %}</a>
+        </div>
+
+    </article>
+    <p class="authenta wr txr f8">{% trans '*Assisted by Authenta' %}</p>
+</div>
+{% endblock %}
